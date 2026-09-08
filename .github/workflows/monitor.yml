@@ -1,0 +1,73 @@
+name: RWE Medicare Monitor
+on:
+  schedule:
+    - cron: '17 1 * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'live = paid API collection; test = offline verification only'
+        type: choice
+        options: [test, live]
+        default: test
+permissions:
+  contents: write
+concurrency:
+  group: rwe-monitor-main
+  cancel-in-progress: false
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    if: github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        working-directory: rwe-medicare-policy-tracker/rwe-medicare-policy-tracker
+    env:
+      PYTHONUTF8: '1'
+      TZ: Asia/Shanghai
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline regression tests
+        run: python -m unittest discover -s tests -v
+      - name: Collect and generate
+        if: github.event_name == 'schedule' || inputs.mode == 'live'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            python scripts/pipeline.py --scheduled
+          else
+            python scripts/pipeline.py
+          fi
+      - name: Commit and push generated files
+        if: github.event_name == 'schedule' || inputs.mode == 'live'
+        run: |
+          git diff --check
+          git add -- data provinces reports
+          if git diff --cached --quiet; then
+            echo "No changed files"
+            exit 0
+          fi
+          git diff --cached --stat
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "monitor: $(date +%F) 增量更新"
+          git push origin HEAD:main
+      - name: Preserve outputs if push or collection fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitor-failure-${{ github.run_id }}
+          path: |
+            rwe-medicare-policy-tracker/rwe-medicare-policy-tracker/data/
+            rwe-medicare-policy-tracker/rwe-medicare-policy-tracker/reports/
+            rwe-medicare-policy-tracker/rwe-medicare-policy-tracker/provinces/
+          retention-days: 14
