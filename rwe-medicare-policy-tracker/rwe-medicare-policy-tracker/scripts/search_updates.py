@@ -1,4 +1,4 @@
-"""OpenAI Responses web-search collection; no secret is written to disk."""
+"""DeepSeek Responses web-search collection; no secret is written to disk."""
 import csv, json, os, re, time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
@@ -49,7 +49,7 @@ def response(payload, key):
     raw = json.dumps(payload, ensure_ascii=False).encode()
     for attempt in range(3):
         try:
-            req = Request('https://api.openai.com/v1/responses', data=raw,
+            req = Request('https://api.deepseek.com/responses', data=raw,
                           headers={'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json'})
             with urlopen(req, timeout=240) as r:
                 data = json.load(r)
@@ -58,9 +58,23 @@ def response(payload, key):
             return data
         except HTTPError as e:
             if e.code not in (429, 500, 502, 503, 504) or attempt == 2:
-                raise RuntimeError('OpenAI request failed, HTTP ' + str(e.code)) from None
+                raise RuntimeError('DeepSeek request failed, HTTP ' + str(e.code)) from None
             time.sleep(2 ** attempt)
     raise RuntimeError('API retries exhausted')
+
+def search_sources(data):
+    # DeepSeek does not support OpenAI's include parameter. Retain source
+    # metadata when present and citations from final message annotations.
+    found = []
+    for item in data.get('output', []):
+        if item.get('type') == 'web_search_call':
+            found.extend(item.get('action', {}).get('sources', []))
+        if item.get('type') == 'message':
+            for content in item.get('content', []):
+                for annotation in content.get('annotations', []):
+                    if annotation.get('type') == 'url_citation':
+                        found.append(annotation)
+    return found
 
 def parse_response(data):
     calls = [x for x in data.get('output', []) if x.get('type') == 'web_search_call']
@@ -77,9 +91,9 @@ def parse_response(data):
     return batch
 
 def collect(root, state):
-    key = os.environ.get('OPENAI_API_KEY', '')
+    key = os.environ.get('DEEPSEEK_API_KEY', '')
     if not key:
-        raise RuntimeError('Configure GitHub Actions secret OPENAI_API_KEY before live collection')
+        raise RuntimeError('Configure GitHub Actions secret DEEPSEEK_API_KEY before live collection')
     now = datetime.now(CN)
     last = state.get('last_successful_run')
     if last:
@@ -109,8 +123,6 @@ def collect(root, state):
     for index, group in enumerate(groups):
         domains = list(dict.fromkeys(urlsplit(s['seed_url']).hostname for s in group))
         tool = {'type': 'web_search'}
-        if domains:
-            tool['filters'] = {'allowed_domains': domains}
         task = {
             'window_start': str(start), 'window_end': now.date().isoformat(),
             'sites': group, 'keywords': keywords, 'history': history, 'context': context,
@@ -129,17 +141,23 @@ status只用新增/更新/持续推进/已完成/待核实/无变化/空；confi
 summary必须直接由原文支持，不能把研究结果推断成医保政策。source_url为原文URL。
 记录实际覆盖缺口到gaps，访问失败不等于没有变化。不输出Markdown代码围栏。
 任务数据：""" + json.dumps(task, ensure_ascii=False)
-        data = response({'model': os.environ.get('OPENAI_MODEL') or 'gpt-5.4',
-                         'tools': [tool], 'tool_choice': 'required',
-                         'include': ['web_search_call.action.sources'],
-                         'store': False, 'max_output_tokens': 16000, 'input': prompt}, key)
+        data = response({'model': os.environ.get('DEEPSEEK_MODEL') or 'deepseek-v4-flash',
+                         'tools': [tool], 'tool_choice': {'type': 'web_search'},
+                         'reasoning': {'effort': 'low'},
+                         'text': {'format': {'type': 'json_object'}}, 'max_output_tokens': 16000, 'input': prompt}, key)
         batch = parse_response(data)
+        if not isinstance(batch.get('gaps', []), list) or not all(isinstance(x, str) for x in batch.get('gaps', [])):
+            raise ValueError('Malformed coverage gaps')
         audit.append({'batch': index + 1, 'response_id': data.get('id'), 'gaps': batch.get('gaps', []),
-                      'sources': [x.get('action', {}).get('sources', []) for x in data['output'] if x.get('type') == 'web_search_call']})
+                      'sources': search_sources(data)})
         for candidate in batch['records']:
             if not isinstance(candidate, dict) or not isinstance(candidate.get('evidence_quote'), str):
                 raise ValueError('Malformed evidence record')
             r = validate([candidate.get('record')])[0]
+            host = (urlsplit(r['source_url']).hostname or '').lower()
+            if domains and not any(host == d or host.endswith('.' + d) for d in domains):
+                audit[-1].setdefault('gaps', []).append('已排除非本组来源：' + r['source_url'])
+                continue
             page = fetch(r['source_url'])
             quote = ''.join(candidate['evidence_quote'].split())
             verified = page['ok'] and len(quote) >= 6 and quote in ''.join(page.get('text', '').split())

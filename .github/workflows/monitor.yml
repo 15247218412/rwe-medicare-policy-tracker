@@ -1,5 +1,11 @@
 name: RWE Medicare Monitor
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/monitor.yml'
+      - 'rwe-medicare-policy-tracker/rwe-medicare-policy-tracker/scripts/**'
+      - 'rwe-medicare-policy-tracker/rwe-medicare-policy-tracker/tests/**'
   schedule:
     - cron: '17 1 * * *'
   workflow_dispatch:
@@ -38,8 +44,8 @@ jobs:
       - name: Collect and generate
         if: github.event_name == 'schedule' || inputs.mode == 'live'
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_MODEL: ${{ vars.DEEPSEEK_MODEL }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           if [ "$EVENT_NAME" = "schedule" ]; then

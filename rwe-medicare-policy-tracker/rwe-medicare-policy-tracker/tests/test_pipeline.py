@@ -85,7 +85,7 @@ class PipelineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             search.parse_response({'output': []})
     def test_missing_key_no_network(self):
-        with patch.dict('os.environ', {'OPENAI_API_KEY': ''}):
+        with patch.dict('os.environ', {'DEEPSEEK_API_KEY': ''}):
             with self.assertRaises(RuntimeError):
                 search.collect(self.root, {})
     def test_search_valid_json(self):
@@ -101,12 +101,43 @@ class PipelineTests(unittest.TestCase):
         ]}
         def fake_fetch(url):
             return {'url': url, 'ok': True, 'text': 'mock page'}
-        with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-only'}), patch.object(search, 'fetch', side_effect=fake_fetch), patch.object(search, 'response', return_value=data) as api:
+        with patch.dict('os.environ', {'DEEPSEEK_API_KEY': 'test-only'}), patch.object(search, 'fetch', side_effect=fake_fetch), patch.object(search, 'response', return_value=data) as api:
             batch = search.collect(self.root, {})
         self.assertEqual(api.call_count, 5)
+        payload = api.call_args.args[0]
+        self.assertEqual(payload['model'], 'deepseek-v4-flash')
+        self.assertEqual(payload['tool_choice'], {'type': 'web_search'})
+        self.assertNotIn('include', payload)
+        self.assertNotIn('filters', payload['tools'][0])
         self.assertEqual(len(batch['coverage']['fixed_sites']), 32)
         self.assertTrue(batch['complete'])
         self.assertEqual(batch['records'], [])
+    def test_out_of_group_sources_only_enter_supplement(self):
+        record = row()
+        record['source_url'] = 'https://news.example.org/test-only'
+        output = json.dumps({'complete': True, 'records': [{'record': record, 'evidence_quote': '测试项目启动'}], 'gaps': []})
+        data = {'id': 'mock', 'output': [
+            {'type': 'web_search_call', 'status': 'completed'},
+            {'type': 'message', 'content': [{'type': 'output_text', 'text': output}]}
+        ]}
+        with patch.dict('os.environ', {'DEEPSEEK_API_KEY': 'test-only'}), patch.object(search, 'fetch', side_effect=lambda url: {'url': url, 'ok': False}), patch.object(search, 'response', return_value=data):
+            batch = search.collect(self.root, {})
+        self.assertEqual(len(batch['records']), 1)
+        self.assertEqual(batch['records'][0]['status'], '待核实')
+        self.assertTrue(all(b['gaps'] for b in batch['coverage']['search_batches'][:4]))
+    def test_deepseek_endpoint(self):
+        from unittest.mock import MagicMock
+        context = MagicMock()
+        context.__enter__.return_value.read.return_value = b'{"status":"completed","output":[]}'
+        with patch.object(search, 'urlopen', return_value=context) as http:
+            search.response({'model': 'deepseek-v4-flash'}, 'test-key')
+        req = http.call_args.args[0]
+        self.assertEqual(req.full_url, 'https://api.deepseek.com/responses')
+        self.assertEqual(req.get_header('Authorization'), 'Bearer test-key')
+    def test_deepseek_citations(self):
+        cite = {'type': 'url_citation', 'url': 'https://www.nhsa.gov.cn/'}
+        data = {'output': [{'type': 'message', 'content': [{'annotations': [cite]}]}]}
+        self.assertEqual(search.search_sources(data), [cite])
     def test_low_confidence_pending(self):
         r = row()
         r['confidence'] = 'low'

@@ -2,14 +2,14 @@
 
 ## 已接入的流程
 
-GitHub Actions → 固定官网访问 → OpenAI Responses 联网检索 → 22字段校验与增量合并 → normalize.py → deduplicate.py → latest.csv → build_report.py → Markdown报告与省份自动记录 → Git提交与推送。
+GitHub Actions → 固定官网访问 → DeepSeek Responses 联网检索 → 22字段校验与增量合并 → normalize.py → deduplicate.py → latest.csv → build_report.py → Markdown报告与省份自动记录 → Git提交与推送。
 
 项目仍在 Git 根目录下的 `rwe-medicare-policy-tracker/rwe-medicare-policy-tracker` 中；工作流必须位于 Git 根目录的 `.github/workflows/monitor.yml`。无需移动现有文件。
 
 ## 启用
 
-1. 在仓库 Settings → Secrets and variables → Actions → New repository secret 添加 `OPENAI_API_KEY`。不要把密钥写入文件或聊天。
-2. 可选 Repository variable `OPENAI_MODEL`，默认 `gpt-5.4`，须支持 Responses API 的 web_search 工具。
+1. 在仓库 Settings → Secrets and variables → Actions → New repository secret 添加 `DEEPSEEK_API_KEY`。不要把密钥写入文件或聊天。
+2. 可选 Repository variable `DEEPSEEK_MODEL`，默认 `deepseek-v4-flash`，须支持 Responses API 的 web_search 工具。
 3. Actions → RWE Medicare Monitor → Run workflow → mode=test，执行离线验证。
 4. 再以 mode=live 运行首次联网基线。该步骤会调用付费 API；初始32个官网分4组，加1组全网补漏，至少5次模型请求，搜索工具调用另计。后续历史来源增加时组数可能增加。
 5. 查看 Actions 日志及生成的 data/collection.json、data/master.csv、data/latest.csv、reports/YYYY-MM-DD.md。
@@ -27,7 +27,7 @@ python -m unittest discover -s tests -v
 python scripts/pipeline.py --help
 ```
 
-配置本地环境变量 OPENAI_API_KEY 后执行：
+配置本地环境变量 DEEPSEEK_API_KEY 后执行：
 
 ```powershell
 python scripts/pipeline.py
@@ -71,6 +71,9 @@ CSV导入视为人工提供的完整批次。相同批次重复导入不覆盖�
 
 ## 接口资料
 
-- [OpenAI Web search](https://developers.openai.com/api/docs/guides/tools-web-search)
+- [DeepSeek Responses](https://api-docs.deepseek.com/guides/responses_api/)
 - [GitHub workflow syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)
 - [GitHub scheduled events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows)
+
+提交采集脚本、测试或工作流修改到main时，自动执行离线测试，不调用付费API。已有DEEPSEEK_API_KEY即可使用默认模型，无需配置其他变量。
+DeepSeek未声明支持域名filters和include参数，本实现不发送它们；指定官网分组在结果端校验域名，排除项记入覆盖缺口。
