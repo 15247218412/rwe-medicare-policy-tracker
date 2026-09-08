@@ -125,6 +125,46 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(len(batch['records']), 1)
         self.assertEqual(batch['records'][0]['status'], '待核实')
         self.assertTrue(all(b['gaps'] for b in batch['coverage']['search_batches'][:4]))
+    def search_output(self, text):
+        return {'id': 'test-response', 'status': 'completed', 'output': [
+            {'type': 'web_search_call', 'status': 'completed'},
+            {'type': 'message', 'content': [{'type': 'output_text', 'text': text}]}
+        ]}
+    def test_intermediate_message_is_not_json(self):
+        data = self.search_output('{"complete":true,"records":[],"gaps":[]}')
+        data['output'].insert(0, {'type': 'message', 'content': [{'type': 'output_text', 'text': 'Searching official sources'}]})
+        self.assertEqual(search.parse_response(data)['records'], [])
+    def test_fenced_json(self):
+        text = chr(96)*3 + 'json\n{"complete":true,"records":[],"gaps":[]}\n' + chr(96)*3
+        self.assertTrue(search.parse_response(self.search_output(text))['complete'])
+    def test_malformed_json_retries_once(self):
+        bad = self.search_output('{"complete":true, broken}')
+        good = self.search_output('{"complete":true,"records":[],"gaps":[]}')
+        with patch.object(search, 'response', side_effect=[bad, good]) as api:
+            _, batch = search.request_batch({}, 'test-only')
+        self.assertEqual(api.call_count, 2)
+        self.assertEqual(batch['records'], [])
+    def test_persistent_malformed_json_no_write(self):
+        before = self.snapshot()
+        with patch.object(search, 'response', return_value=self.search_output('{"complete":true,}')) as api:
+            with self.assertRaises(search.OutputFormatError):
+                search.request_batch({}, 'test-only')
+        self.assertEqual(api.call_count, 2)
+        self.assertEqual(before, self.snapshot())
+    def test_incomplete_batch_does_not_retry_as_empty_success(self):
+        with patch.object(search, 'response', return_value=self.search_output('{"complete":false,"records":[],"gaps":[]}')) as api:
+            with self.assertRaises(ValueError):
+                search.request_batch({}, 'test-only')
+        self.assertEqual(api.call_count, 1)
+    def test_duplicate_json_keys_rejected(self):
+        with self.assertRaises(search.OutputFormatError):
+            search.parse_response(self.search_output('{"complete":false,"complete":true,"records":[]}'))
+    def test_schema_covers_all_22_fields(self):
+        schema = search.batch_format()
+        self.assertEqual(schema['type'], 'json_schema')
+        record = schema['schema']['properties']['records']['items']['properties']['record']
+        self.assertEqual(record['required'], p.FIELDS)
+        self.assertFalse(record['additionalProperties'])
     def test_deepseek_endpoint(self):
         from unittest.mock import MagicMock
         context = MagicMock()

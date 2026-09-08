@@ -76,19 +76,93 @@ def search_sources(data):
                         found.append(annotation)
     return found
 
+class OutputFormatError(ValueError):
+    """Model output could not be validated; eligible for one fresh search retry."""
+
+def batch_format():
+    properties = {name: {'type': 'string'} for name in FIELDS}
+    properties['status']['enum'] = ['', '新增', '更新', '持续推进', '已完成', '待核实', '无变化']
+    properties['confidence']['enum'] = ['', 'high', 'medium', 'low']
+    return {'type': 'json_schema', 'name': 'monitor_batch', 'schema': {
+        'type': 'object', 'additionalProperties': False,
+        'required': ['complete', 'records', 'gaps'],
+        'properties': {
+            'complete': {'type': 'boolean'},
+            'gaps': {'type': 'array', 'items': {'type': 'string'}},
+            'records': {'type': 'array', 'items': {
+                'type': 'object', 'additionalProperties': False,
+                'required': ['record', 'evidence_quote'],
+                'properties': {
+                    'evidence_quote': {'type': 'string'},
+                    'record': {'type': 'object', 'additionalProperties': False,
+                               'required': FIELDS, 'properties': properties}
+                }
+            }}
+        }
+    }}
+
+def no_duplicate_keys(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise OutputFormatError('Duplicate JSON property: ' + key)
+        result[key] = value
+    return result
+
 def parse_response(data):
+    if data.get('status', 'completed') != 'completed':
+        raise ValueError('API response incomplete; database unchanged')
     calls = [x for x in data.get('output', []) if x.get('type') == 'web_search_call']
     if not any(x.get('status') == 'completed' for x in calls):
         raise ValueError('No completed web search; refuse fabricated success')
-    texts = [c['text'] for x in data.get('output', []) if x.get('type') == 'message'
-             for c in x.get('content', []) if c.get('type') == 'output_text']
-    text = '\n'.join(texts).strip()
-    if text.startswith('```'):
-        text = re.sub(r'^\`\`\`(?:json)?\s*|\s*\`\`\`$', '', text)
-    batch = json.loads(text)
-    if batch.get('complete') is not True or not isinstance(batch.get('records'), list):
-        raise ValueError('Incomplete search batch')
+    messages = [x for x in data.get('output', []) if x.get('type') == 'message']
+    if not messages:
+        raise OutputFormatError('No final message')
+    # Intermediate assistant messages may be plain-text search progress.
+    contents = messages[-1].get('content', [])
+    if any(c.get('type') == 'refusal' for c in contents):
+        raise ValueError('Model refusal; database unchanged')
+    text = ''.join(c['text'] for c in contents if c.get('type') == 'output_text').strip()
+    fence = chr(96) * 3
+    if text.startswith(fence) and text.endswith(fence):
+        text = text[len(fence):-len(fence)].strip()
+        if text.startswith('json'):
+            text = text[4:].lstrip()
+    try:
+        batch = json.loads(text, object_pairs_hook=no_duplicate_keys)
+    except json.JSONDecodeError as error:
+        raise OutputFormatError(
+            f'Invalid JSON at line {error.lineno}, column {error.colno}; chars={len(text)}'
+        ) from None
+    if not isinstance(batch, dict) or not isinstance(batch.get('complete'), bool):
+        raise OutputFormatError('Batch must contain boolean complete')
+    if batch['complete'] is not True:
+        raise ValueError('Incomplete search batch; database unchanged')
+    if not isinstance(batch.get('records'), list):
+        raise OutputFormatError('records must be an array')
+    if not isinstance(batch.get('gaps', []), list) or not all(isinstance(x, str) for x in batch.get('gaps', [])):
+        raise OutputFormatError('gaps must be a string array')
+    for candidate in batch['records']:
+        if not isinstance(candidate, dict) or not isinstance(candidate.get('evidence_quote'), str):
+            raise OutputFormatError('Malformed evidence record')
+        try:
+            validate([candidate.get('record')])
+        except (ValueError, TypeError) as error:
+            raise OutputFormatError('Invalid record fields: ' + str(error)) from None
     return batch
+
+def request_batch(payload, key):
+    for attempt in range(2):
+        data = response(payload, key)
+        try:
+            return data, parse_response(data)
+        except OutputFormatError as error:
+            # Never log the request, Authorization header, or full model response.
+            print(f'Batch format error: response_id={data.get("id", "unknown")}; attempt={attempt + 1}/2; {error}', flush=True)
+            if attempt == 1:
+                raise
+            print('Retrying this search batch once; no database changes have been made.', flush=True)
+    raise AssertionError('Unreachable')
 
 def collect(root, state):
     key = os.environ.get('DEEPSEEK_API_KEY', '')
@@ -141,11 +215,10 @@ status只用新增/更新/持续推进/已完成/待核实/无变化/空；confi
 summary必须直接由原文支持，不能把研究结果推断成医保政策。source_url为原文URL。
 记录实际覆盖缺口到gaps，访问失败不等于没有变化。不输出Markdown代码围栏。
 任务数据：""" + json.dumps(task, ensure_ascii=False)
-        data = response({'model': os.environ.get('DEEPSEEK_MODEL') or 'deepseek-v4-flash',
+        data, batch = request_batch({'model': os.environ.get('DEEPSEEK_MODEL') or 'deepseek-v4-flash',
                          'tools': [tool], 'tool_choice': {'type': 'web_search'},
                          'reasoning': {'effort': 'low'},
-                         'text': {'format': {'type': 'json_object'}}, 'max_output_tokens': 16000, 'input': prompt}, key)
-        batch = parse_response(data)
+                         'text': {'format': batch_format()}, 'max_output_tokens': 16000, 'input': prompt}, key)
         if not isinstance(batch.get('gaps', []), list) or not all(isinstance(x, str) for x in batch.get('gaps', [])):
             raise ValueError('Malformed coverage gaps')
         audit.append({'batch': index + 1, 'response_id': data.get('id'), 'gaps': batch.get('gaps', []),
