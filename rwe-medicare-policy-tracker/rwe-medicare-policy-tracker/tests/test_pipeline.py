@@ -151,6 +151,16 @@ class PipelineTests(unittest.TestCase):
         with self.assertRaises(search.OutputFormatError):
             search.parse_response(self.search_output(payload))
 
+    def test_csv_writer_removes_field_and_line_end_whitespace(self):
+        record = row()
+        record['notes'] = ' 需要核实  '
+        path = self.root / 'data/master.csv'
+        p.write_csv(path, [record])
+        raw = path.read_bytes()
+        self.assertNotIn(b'\r\n', raw)
+        self.assertNotIn(b' \n', raw)
+        self.assertEqual(p.read_csv(path)[0]['notes'], '需要核实')
+
     def test_missing_fields_and_extra_csv_column(self):
         with self.assertRaises(ValueError):
             p.validate([{'title': 'x'}])

@@ -31,6 +31,6 @@ for name in ["master.csv", "latest.csv", "regions.csv", "documents.csv", "organi
             if k in row and row[k] not in allowed:
                 print(f"WARN {name}: unexpected {k}={row[k]!r}")
     with path.open("w", encoding="utf-8-sig", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=fieldnames)
+        w = csv.DictWriter(f, fieldnames=fieldnames, lineterminator='\n')
         w.writeheader(); w.writerows(rows)
 print("Normalization complete.")

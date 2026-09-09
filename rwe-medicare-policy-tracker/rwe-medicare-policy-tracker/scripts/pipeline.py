@@ -41,8 +41,9 @@ def read_csv(path):
         return validate(list(reader))
 
 def write_csv(path, rows):
+    rows = validate(rows)
     with path.open('w', encoding='utf-8-sig', newline='') as f:
-        w = csv.DictWriter(f, fieldnames=FIELDS)
+        w = csv.DictWriter(f, fieldnames=FIELDS, lineterminator='\n')
         w.writeheader()
         w.writerows(rows)
 
