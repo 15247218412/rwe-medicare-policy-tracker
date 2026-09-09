@@ -171,13 +171,29 @@ def parse_response(data, require_search=True):
         raise OutputFormatError('records must be an array')
     if not isinstance(batch.get('gaps', []), list) or not all(isinstance(x, str) for x in batch.get('gaps', [])):
         raise OutputFormatError('gaps must be a string array')
+    normalized = []
     for candidate in batch['records']:
-        if not isinstance(candidate, dict) or not isinstance(candidate.get('evidence_quote'), str):
+        if not isinstance(candidate, dict):
+            raise OutputFormatError('Malformed evidence record')
+        if 'record' in candidate:
+            if not set(candidate).issubset({'record', 'evidence_quote'}):
+                raise OutputFormatError('Malformed evidence record')
+            record = candidate.get('record')
+            quote = candidate.get('evidence_quote')
+        elif set(candidate).issubset(set(FIELDS)) and candidate.get('title') and candidate.get('source_url'):
+            record, quote = candidate, ''
+        else:
+            raise OutputFormatError('Malformed evidence record')
+        if quote is None:
+            quote = ''
+        if not isinstance(quote, str):
             raise OutputFormatError('Malformed evidence record')
         try:
-            validate([candidate.get('record')])
+            validated = validate([record])[0]
         except (ValueError, TypeError) as error:
             raise OutputFormatError('Invalid record fields: ' + str(error)) from None
+        normalized.append({'record': validated, 'evidence_quote': quote})
+    batch['records'] = normalized
     if batch['complete'] is not True:
         raise IncompleteBatchError(batch)
     return batch
@@ -300,7 +316,8 @@ summary必须直接由原文支持，不能把研究结果推断成医保政策�
             verified = page['ok'] and len(quote) >= 6 and quote in ''.join(page.get('text', '').split())
             if not verified:
                 r.update(status='待核实', confidence='low')
-                r['notes'] = '原文证据未通过自动核验；需人工核实'
+                r['notes'] = ('模型未提供可核验原文引文；需人工核实' if not quote
+                              else '原文证据未通过自动核验；需人工核实')
             else:
                 r['official'] = 'yes'
                 # Excerpt presence supports provenance, not full semantic validation.

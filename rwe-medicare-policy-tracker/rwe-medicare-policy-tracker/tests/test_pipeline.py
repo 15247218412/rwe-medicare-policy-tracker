@@ -100,6 +100,36 @@ class PipelineTests(unittest.TestCase):
                 search.request_batch({'model': 'deepseek-v4-flash'}, 'test-only')
         self.assertEqual(api.call_count, 4)
 
+    def test_missing_evidence_quote_is_normalized_for_manual_review(self):
+        record = row()
+        payload = json.dumps({'complete': True, 'records': [{'record': record}], 'gaps': []}, ensure_ascii=False)
+        batch = search.parse_response(self.search_output(payload))
+        self.assertEqual(batch['records'][0]['evidence_quote'], '')
+
+    def test_null_evidence_quote_is_normalized_for_manual_review(self):
+        record = row()
+        payload = json.dumps({'complete': True, 'records': [{'record': record, 'evidence_quote': None}], 'gaps': []}, ensure_ascii=False)
+        batch = search.parse_response(self.search_output(payload))
+        self.assertEqual(batch['records'][0]['evidence_quote'], '')
+
+    def test_flat_record_is_wrapped_for_manual_review(self):
+        record = row()
+        payload = json.dumps({'complete': True, 'records': [record], 'gaps': []}, ensure_ascii=False)
+        batch = search.parse_response(self.search_output(payload))
+        self.assertEqual(batch['records'][0], {'record': record, 'evidence_quote': ''})
+
+    def test_non_string_evidence_quote_is_rejected(self):
+        record = row()
+        for quote in (7, ['测试项目启动']):
+            payload = json.dumps({'complete': True, 'records': [{'record': record, 'evidence_quote': quote}], 'gaps': []}, ensure_ascii=False)
+            with self.assertRaises(search.OutputFormatError):
+                search.parse_response(self.search_output(payload))
+
+    def test_arbitrary_record_structure_is_rejected(self):
+        payload = json.dumps({'complete': True, 'records': [{'unexpected': 'value'}], 'gaps': []})
+        with self.assertRaises(search.OutputFormatError):
+            search.parse_response(self.search_output(payload))
+
     def test_missing_fields_and_extra_csv_column(self):
         with self.assertRaises(ValueError):
             p.validate([{'title': 'x'}])
@@ -136,6 +166,19 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(len(batch['coverage']['fixed_sites']), 32)
         self.assertTrue(batch['complete'])
         self.assertEqual(batch['records'], [])
+    def test_missing_quote_is_collected_only_as_low_confidence_pending(self):
+        record = row()
+        output = json.dumps({'complete': True, 'records': [{'record': record}], 'gaps': []}, ensure_ascii=False)
+        data = {'id': 'mock', 'output': [
+            {'type': 'web_search_call', 'status': 'completed', 'action': {'sources': []}},
+            {'type': 'message', 'content': [{'type': 'output_text', 'text': output}]}
+        ]}
+        with patch.dict('os.environ', {'DEEPSEEK_API_KEY': 'test-only'}), patch.object(search, 'fetch', return_value={'url': record['source_url'], 'ok': True, 'text': '测试项目启动'}), patch.object(search, 'response', return_value=data):
+            batch = search.collect(self.root, {})
+        self.assertEqual(batch['records'][0]['status'], '待核实')
+        self.assertEqual(batch['records'][0]['confidence'], 'low')
+        self.assertIn('未提供', batch['records'][0]['notes'])
+
     def test_out_of_group_sources_only_enter_supplement(self):
         record = row()
         record['source_url'] = 'https://news.example.org/test-only'
