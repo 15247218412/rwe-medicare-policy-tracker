@@ -1,0 +1,280 @@
+{
+  "window_start": "2025-09-09",
+  "window_end": "2026-09-09",
+  "mode": "API web search + fixed official-site scan",
+  "limitations": "本次存在未完成批次，详见检索缺口；已核验结果仍予保存。搜索索引和网站访问可能遗漏；自动引文核验不等于人工事实审核。首次基线仅覆盖指定回溯期。",
+  "fixed_sites": [
+    {
+      "url": "https://www.nhsa.gov.cn/",
+      "ok": true
+    },
+    {
+      "url": "https://ybj.beijing.gov.cn/",
+      "ok": true
+    },
+    {
+      "url": "https://ylbz.tj.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ylbzj.hebei.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ybj.shanxi.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ylbzj.nmg.gov.cn/",
+      "ok": true
+    },
+    {
+      "url": "https://ybj.ln.gov.cn/",
+      "ok": true
+    },
+    {
+      "url": "https://ybj.jl.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ybj.hlj.gov.cn/",
+      "ok": true
+    },
+    {
+      "url": "https://ybj.sh.gov.cn/",
+      "ok": true
+    },
+    {
+      "url": "https://ybj.jiangsu.gov.cn/",
+      "ok": true
+    },
+    {
+      "url": "https://ybj.zj.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ybj.ah.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ybj.fujian.gov.cn/",
+      "ok": true
+    },
+    {
+      "url": "https://ybj.jiangxi.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ybj.shandong.gov.cn/",
+      "ok": true
+    },
+    {
+      "url": "https://ylbz.henan.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ybj.hubei.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ybj.hunan.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://hsa.gd.gov.cn/",
+      "ok": true
+    },
+    {
+      "url": "https://ybj.gxzf.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ybj.hainan.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ylbzj.cq.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ybj.sc.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ybj.guizhou.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ylbz.yn.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ylbzj.xizang.gov.cn/",
+      "ok": true
+    },
+    {
+      "url": "https://ybj.shaanxi.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ybj.gansu.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ybj.qinghai.gov.cn/",
+      "ok": true
+    },
+    {
+      "url": "https://ybj.nx.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    },
+    {
+      "url": "https://ybj.xinjiang.gov.cn/",
+      "ok": false,
+      "reason": "网页不可读取"
+    }
+  ],
+  "search_batches": [
+    {
+      "batch": 1,
+      "response_id": "64814c21-0fb7-481d-8d82-10cdb4309310",
+      "complete": true,
+      "gaps": [
+        "天津市医疗保障局站点(ylbz.tj.gov.cn)未返回可检索正文，天津非国家试点先行地区，窗口内未见相关本地政策，未能核验。",
+        "河北省医疗保障局站点(ylbzj.hebei.gov.cn)首页无新闻正文可检索，河北非试点先行地区，窗口内未见相关本地政策，未能核验。",
+        "北京市医疗保障局(ybj.beijing.gov.cn)站点及站内检索未见关于真实世界医保综合价值评价的本地试点实施方案或专项通知，仅北京多家医院作为国家可信评价点成员入选，北京本地落实文件未检索到。",
+        "《医疗服务/药品真实世界医保综合价值评价指南（试行）》在窗口后期是否正式印发（征求意见结束后）未能确认，需要后续轮次跟进。"
+      ],
+      "sources": []
+    },
+    {
+      "batch": 2,
+      "response_id": "367bd998-57b8-475a-9b96-7f5467677b56",
+      "complete": true,
+      "gaps": [
+        "山西省、吉林省医保局官网首页本次扫描访问失败（fixed_scan ok=false），需后续直接核验站内政策文件。",
+        "内蒙古自治区医疗保障局站内检索未发现真实世界医保综合价值评价相关内容，需进一步确认该区是否参与国家试点或出台地方部署。",
+        "山西省相关事件仅来自医院/新闻渠道（运城市中心医院入选国家可信评价点），未见山西省医保局官网正式文件，山西是否纳入国家试点需核实（国家试点省名单为北京、辽宁、江苏、浙江、福建、广东、海南、重庆、四川、陕西、甘肃，不含山西）。",
+        "吉林省级研究基地公示为拟入选名单，最终确定名单及后续正式文件未在本次检索中核验到原文。",
+        "本组为首次基线运行，未覆盖各省级局全量历史及政策库归档页，仅报告窗口内发现的事件。",
+        "已排除非本组来源：http://zwgk.changchun.gov.cn/zcbm/sylbzj/ybjxxgkml/202609/t20260902_3509727.html",
+        "已排除非本组来源：https://temp.dlyj.dl.gov.cn/art/2026/1/28/art_1190_2497298.html",
+        "已排除非本组来源：https://yc.sxgov.cn/content/2026-01/20/content_13568569.htm"
+      ],
+      "sources": []
+    },
+    {
+      "batch": 3,
+      "response_id": "9ce3a647-c7f5-4905-96c2-2d1a1668f094",
+      "complete": false,
+      "gaps": [
+        "黑龙江省医疗保障局与上海市医疗保障局主页及检索未见本主题省级政策/项目内容，两地亦不在国家试点省份名单，是否开展省级部署需后续确认",
+        "浙江省医疗保障局主页在固定扫描中加载失败，未直接核对主页栏目",
+        "国家通知附件1中江苏/浙江试点先行城市及任务分工细节未从原文附件逐项核实",
+        "2026-01-16国家可信评价点网络（79家医院）中涉及上海、江苏、浙江等扫描省份的医院成员情况未在省级医保局层面核实",
+        "2026实践阶段（数据库/分任务评价/成果库建设）在江苏、浙江省级层面的推进进展未见实质公开信息，需后续跟进",
+        "已排除非本组来源：http://www.nhsa.gov.cn/art/2025/9/23/art_109_17984.html",
+        "已排除非本组来源：http://www.nhsa.gov.cn/art/2025/9/23/art_109_17984.html"
+      ],
+      "sources": []
+    },
+    {
+      "batch": 4,
+      "response_id": "ba04777e-affd-456b-8db6-211f0af34a4e",
+      "complete": true,
+      "gaps": [
+        "安徽（ybj.ah.gov.cn）与江西（ybj.jiangxi.gov.cn）官网直接抓取失败，安徽站内未检索到本省真实世界医保综合价值评价专门政策或项目，仅有《安徽省支持创新医药高质量发展若干措施》（皖医保发〔2026〕4号）提及支持国家可信评价点（原文未在省医保局官网核验），安徽覆盖存在缺口",
+        "山东省医保局官网未检索到本省专门的真实世界医保综合价值评价部署文件，山东活动仅见青岛市级/高校来源，山东全省层面覆盖待核实",
+        "国家医保局真实世界医保综合价值评价试点通知（医保办发〔2025〕15号，2025-09-23）与国家可信评价点网络（2026-01-16，79家）等全国性事件未纳入本组省级站点记录，未在省级官网逐一核验其落地转文",
+        "福建、山东两省官网可访问但首页未见专门真实世界医保综合价值评价栏目，仅通过检索命中，站内完整列表未穷尽",
+        "已排除非本组来源：https://view.sdu.edu.cn/info/2077/214056.htm"
+      ],
+      "sources": []
+    },
+    {
+      "batch": 5,
+      "response_id": "79be1b4e-c81d-449f-a9e1-59ce527a08f9",
+      "complete": true,
+      "gaps": [],
+      "sources": []
+    },
+    {
+      "batch": 6,
+      "response_id": "1e61e3a4-3c1d-481f-99d5-641112d8aff0",
+      "complete": false,
+      "gaps": [
+        "广西：省医保局官网(ybj.gxzf.gov.cn)SSL访问失败，未核验其正式发布的综合价值评价/可信评价点相关内容；广西非国家试点省份，相关线索多来自医院网站，official需核验",
+        "重庆：省(市)医保局官网未检索到作为试点地区的具体实施方案/启动会/项目落地官方文件，仅找到科研联合基金方向线索，试点推进落地情况需持续跟踪核验",
+        "四川、海南官网部分页面访问失败或内容获取受限，2026年4月至窗口期末(2026-09-09)的新增进展未穷尽核验",
+        "国家试点进入2026年实践阶段（数据库/成果库两库建设、分任务评价等），各省落地文件需后续窗口持续跟踪",
+        "已排除非本组来源：http://ylbzj.sc.gov.cn/scsybj/nc020100/2025/10/22/8aecafacc3e84865992c230736b92684.shtml",
+        "已排除非本组来源：http://ylbzj.sc.gov.cn/scsybj/nc010416/2025/11/19/4c09745ed2934dc387f455f700309f35.shtml",
+        "已排除非本组来源：http://www.gxmuch.com/Item/14192.aspx",
+        "已排除非本组来源：https://kjj.cq.gov.cn/zwxx_176/tzgg/202511/t20251112_15157959.html"
+      ],
+      "sources": []
+    },
+    {
+      "batch": 7,
+      "response_id": "8a7c4f7d-a932-4d2c-a39a-32b032d14dce",
+      "complete": true,
+      "gaps": [
+        "贵州医保局seed站点(https://ybj.guizhou.gov.cn/)访问失败，无法核对，贵州不在首批11个试点省份名单内，未发现省级层面相关政策/项目，需后续核实",
+        "云南省医疗保障局站点搜索到的《关于推荐真实世界医保综合价值评价国家可信评价点的通知》(2025-11-01)与《药品真实世界医保综合价值评价系列指南(试行)公开征求意见公告》(2026-01-14)系国家层面文件在省级站点的转载，未作为新增记录，需判断云南是否已实际推荐可信评价点或承接试点任务",
+        "西藏自治区医保局站点扫描未发现真实世界医保综合价值评价相关内容，西藏不在首批试点省份名单内",
+        "国家通知附件(试点先行地区名单及任务分工、参考应用场景)及陕西/云南入选国家可信评价点医疗机构名单未能核对到官方原文，具体城市与医院待核实",
+        "已排除非本组来源：https://www.ydyy.cn/Subject/XWXX/Article/b71f2d62-92e7-4482-aef2-cb2147bd3fbe.htm"
+      ],
+      "sources": []
+    },
+    {
+      "batch": 8,
+      "response_id": "24742103-6839-42d1-93a2-7deef04e0bbd",
+      "complete": false,
+      "gaps": [
+        "青海、宁夏、新疆均为非试点省份，本窗口内未检索到其省级真实世界医保综合价值评价政策或项目，未建立对应记录",
+        "宁夏回族自治区医保局官网文章《宁夏以真实世界数据赋能医保事业高质量发展》(2026-01-22)属医保数据驱动决策工作，未涉综合价值评价试点框架，未收录",
+        "甘肃省医保局官网(ybj.gansu.gov.cn)、宁夏医保局官网(ybj.nx.gov.cn)、新疆医保局官网(ybj.xinjiang.gov.cn)访问失败/未能打开原文，无法核实三省区医保局自身发布的试点实施方案、通知或动态",
+        "兰州列入试点先行地区的名单及任务分工仅见于媒体转载，未打开国家通知附件1原文核实",
+        "各省区在试点启动后的具体数据治理、成果库建设等阶段进展缺乏省级官网佐证",
+        "已排除非本组来源：http://www.nhsa.gov.cn/art/2025/9/23/art_109_17984.html",
+        "已排除非本组来源：https://www.nhsa.gov.cn/art/2026/1/16/art_109_19379.html",
+        "已排除非本组来源：https://finance.gscn.com.cn/system/2026/03/31/013478579.shtml"
+      ],
+      "sources": []
+    },
+    {
+      "batch": 9,
+      "response_id": "0825c1e5-5d99-4862-86c6-cb963e684f03",
+      "complete": true,
+      "gaps": [
+        "医用耗材真实世界医保综合价值评价管理指南是否已另行征求意见未确认",
+        "11个试点先行地区（北京、辽宁、江苏、浙江、福建、广东、海南、重庆、四川、陕西、甘肃）省级落地实施方案、任务分工及遴选具体地区名单未逐一核实",
+        "79家国家可信评价点医疗机构完整名单未核实",
+        "药品、医疗服务两指南征求意见后的正式发布及是否采纳反馈未跟踪",
+        "试点地区数据库建设及2026年底评价成果库收录情况未核实",
+        "国家可信评价点遴选常态化机制与后续批次未见官方动态"
+      ],
+      "sources": []
+    }
+  ]
+}
