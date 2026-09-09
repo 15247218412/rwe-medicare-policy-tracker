@@ -230,6 +230,12 @@ def request_batch(payload, key):
                 batch = format_search_text(payload, data, key)
                 print('Search prose converted to validated structured output.', flush=True)
                 return data, batch
+            except IncompleteBatchError as coverage_error:
+                print(f'Format pass found coverage gaps; attempt={attempt + 1}/2; {coverage_error}', flush=True)
+                if attempt == 1:
+                    print('Continuing with validated partial results; coverage gaps will be reported.', flush=True)
+                    return data, coverage_error.batch
+                print('Retrying this search batch once; no database changes have been made.', flush=True)
             except OutputFormatError as format_error:
                 print(f'Format pass failed; attempt={attempt + 1}/2; {format_error}', flush=True)
                 if attempt == 1:

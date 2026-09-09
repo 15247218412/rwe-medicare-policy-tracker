@@ -235,6 +235,18 @@ class PipelineTests(unittest.TestCase):
                 search.request_batch({}, 'test-only')
         self.assertEqual(api.call_count, 4)
         self.assertEqual(before, self.snapshot())
+    def test_format_pass_partial_coverage_is_reported_instead_of_failing(self):
+        prose = self.search_output('检索完成，但部分官网无法访问。')
+        partial = {'id': 'format-response', 'status': 'completed', 'output': [
+            {'type': 'message', 'content': [{'type': 'output_text',
+             'text': '{"complete":false,"records":[],"gaps":["广西医保局官网SSL错误"]}'}]}
+        ]}
+        with patch.object(search, 'response', side_effect=[prose, partial, prose, partial]) as api:
+            _, batch = search.request_batch({}, 'test-only')
+        self.assertEqual(api.call_count, 4)
+        self.assertFalse(batch['complete'])
+        self.assertEqual(batch['gaps'], ['广西医保局官网SSL错误'])
+
     def test_incomplete_batch_does_not_retry_as_empty_success(self):
         with patch.object(search, 'response', return_value=self.search_output('{"complete":false,"records":[],"gaps":[]}')) as api:
             _, batch = search.request_batch({}, 'test-only')
