@@ -1,4 +1,4 @@
-level,province,city,organization,seed_url,priority,verification_status,notes
+﻿level,province,city,organization,seed_url,priority,verification_status,notes
 国家,,,国家医疗保障局,https://www.nhsa.gov.cn/,high,verified,国家层面主站
 省级,北京,,北京市医疗保障局,https://ybj.beijing.gov.cn/,high,verified,
 省级,天津,,天津市医疗保障局,https://ylbz.tj.gov.cn/,normal,needs_verify,首次基线运行请核验并纠正
@@ -20,8 +20,8 @@ level,province,city,organization,seed_url,priority,verification_status,notes
 省级,湖南,,湖南省医疗保障局,https://ybj.hunan.gov.cn/,normal,needs_verify,首次基线运行请核验并纠正
 省级,广东,,广东省医疗保障局,https://hsa.gd.gov.cn/,high,needs_verify,国家试点通知涉及省份；首次基线请核验
 省级,广西,,广西壮族自治区医疗保障局,https://ybj.gxzf.gov.cn/,normal,needs_verify,首次基线运行请核验并纠正
-省级,海南,,海南省医疗保障局,https://ybj.hainan.gov.cn/,high,needs_verify,国家试点通知涉及省份；首次基线请核验
-省级,重庆,,重庆市医疗保障局,https://ylbzj.cq.gov.cn/,high,needs_verify,国家试点通知涉及省份；首次基线请核验
+省级,海南,,海南省医疗保障局,https://ybj.hainan.gov.cn/,high,needs_verify,国家医保局附件1确认的试点先行地区；省级入口同时作为试点固定来源
+省级,重庆,,重庆市医疗保障局,https://ylbzj.cq.gov.cn/,high,needs_verify,国家医保局附件1确认的试点先行地区；省级入口同时作为试点固定来源
 省级,四川,,四川省医疗保障局,https://ybj.sc.gov.cn/,high,needs_verify,国家试点通知涉及省份；首次基线请核验
 省级,贵州,,贵州省医疗保障局,https://ybj.guizhou.gov.cn/,normal,needs_verify,首次基线运行请核验并纠正
 省级,云南,,云南省医疗保障局,https://ylbz.yn.gov.cn/,normal,needs_verify,首次基线运行请核验并纠正
@@ -31,3 +31,15 @@ level,province,city,organization,seed_url,priority,verification_status,notes
 省级,青海,,青海省医疗保障局,https://ybj.qinghai.gov.cn/,normal,needs_verify,首次基线运行请核验并纠正
 省级,宁夏,,宁夏回族自治区医疗保障局,https://ybj.nx.gov.cn/,normal,needs_verify,首次基线运行请核验并纠正
 省级,新疆,,新疆维吾尔自治区医疗保障局,https://ybj.xinjiang.gov.cn/,normal,needs_verify,首次基线运行请核验并纠正
+试点先行地区,北京,海淀区,北京市海淀区医疗保障局,https://www.bjhd.gov.cn/,high,verified,国家医保局医保办发〔2025〕15号附件1确认
+试点先行地区,辽宁,大连市,大连市医疗保障局,https://ybj.dl.gov.cn/,high,verified,国家医保局医保办发〔2025〕15号附件1确认
+试点先行地区,江苏,南京市,南京市医疗保障局,https://ybj.nanjing.gov.cn/,high,verified,国家医保局医保办发〔2025〕15号附件1确认
+试点先行地区,江苏,苏州市,苏州市医疗保障局,https://ybj.suzhou.gov.cn/,high,verified,国家医保局医保办发〔2025〕15号附件1确认
+试点先行地区,浙江,杭州市,杭州市医疗保障局,https://www.hangzhou.gov.cn/col/col1229460765/index.html,high,verified,国家医保局医保办发〔2025〕15号附件1确认
+试点先行地区,浙江,温州市,温州市医疗保障局,https://ybj.wenzhou.gov.cn/,high,verified,国家医保局医保办发〔2025〕15号附件1确认
+试点先行地区,福建,厦门市,厦门市医疗保障局,https://ylbz.xm.gov.cn/,high,verified,国家医保局医保办发〔2025〕15号附件1确认
+试点先行地区,福建,三明市,三明市医疗保障局,https://www.sm.gov.cn/szfgzjg/ylbzj/,high,verified,国家医保局医保办发〔2025〕15号附件1确认
+试点先行地区,广东,深圳市,深圳市医疗保障局,https://hsa.sz.gov.cn/,high,verified,国家医保局医保办发〔2025〕15号附件1确认
+试点先行地区,四川,成都市,成都市医疗保障局,https://cdyb.chengdu.gov.cn/,high,verified,国家医保局医保办发〔2025〕15号附件1确认
+试点先行地区,陕西,西安市,西安市医疗保障局,https://ybj.xa.gov.cn/,high,verified,国家医保局医保办发〔2025〕15号附件1确认
+试点先行地区,甘肃,兰州市,兰州市医疗保障局,https://ybj.lanzhou.gov.cn/,high,verified,国家医保局医保办发〔2025〕15号附件1确认

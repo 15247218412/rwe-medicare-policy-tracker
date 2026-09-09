@@ -1,4 +1,4 @@
-import copy, json, shutil, sys, tempfile, unittest
+import copy, csv, json, shutil, sys, tempfile, unittest
 from pathlib import Path
 from datetime import datetime
 from unittest.mock import patch
@@ -204,6 +204,22 @@ class PipelineTests(unittest.TestCase):
             {'type': 'message', 'content': [{'type': 'output_text', 'text': '{"complete": true, "records": []}'}]}
         ]}
         self.assertEqual(search.parse_response(data)['records'], [])
+    def test_fixed_sources_cover_all_confirmed_pilot_areas(self):
+        with (ROOT / 'sources/official_sites.csv').open(encoding='utf-8-sig', newline='') as source:
+            sites = list(csv.DictReader(source))
+        covered = {(site['province'], site['city']) for site in sites}
+        expected = {
+            ('北京', '海淀区'), ('辽宁', '大连市'), ('江苏', '南京市'),
+            ('江苏', '苏州市'), ('浙江', '杭州市'), ('浙江', '温州市'),
+            ('福建', '厦门市'), ('福建', '三明市'), ('广东', '深圳市'),
+            ('海南', ''), ('重庆', ''), ('四川', '成都市'),
+            ('陕西', '西安市'), ('甘肃', '兰州市'),
+        }
+        self.assertTrue(expected.issubset(covered))
+        pilot_rows = [site for site in sites if site['level'] == '试点先行地区']
+        self.assertEqual(len(pilot_rows), 12)
+        self.assertTrue(all(site['priority'] == 'high' and site['verification_status'] == 'verified' for site in pilot_rows))
+
     def test_mocked_collector_all_groups(self):
         data = {'id': 'mock', 'output': [
             {'type': 'web_search_call', 'status': 'completed', 'action': {'sources': []}},
@@ -213,13 +229,13 @@ class PipelineTests(unittest.TestCase):
             return {'url': url, 'ok': True, 'text': 'mock page'}
         with patch.dict('os.environ', {'DEEPSEEK_API_KEY': 'test-only'}), patch.object(search, 'fetch', side_effect=fake_fetch), patch.object(search, 'response', return_value=data) as api:
             batch = search.collect(self.root, {})
-        self.assertEqual(api.call_count, 9)
+        self.assertEqual(api.call_count, 12)
         payload = api.call_args.args[0]
         self.assertEqual(payload['model'], 'deepseek-v4-flash')
         self.assertEqual(payload['tool_choice'], {'type': 'web_search'})
         self.assertNotIn('include', payload)
         self.assertNotIn('filters', payload['tools'][0])
-        self.assertEqual(len(batch['coverage']['fixed_sites']), 32)
+        self.assertEqual(len(batch['coverage']['fixed_sites']), 44)
         self.assertTrue(batch['complete'])
         self.assertEqual(batch['records'], [])
     def test_missing_quote_is_collected_only_as_low_confidence_pending(self):
