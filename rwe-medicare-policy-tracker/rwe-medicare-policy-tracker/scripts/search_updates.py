@@ -82,9 +82,10 @@ class OutputFormatError(ValueError):
 class IncompleteBatchError(ValueError):
     """Search ran but reported incomplete coverage; eligible for one retry."""
 
-    def __init__(self, gaps):
-        self.gaps = gaps
-        detail = "；".join(gaps[:5]) if gaps else "模型未提供具体覆盖缺口"
+    def __init__(self, batch):
+        self.batch = batch
+        self.gaps = batch.get('gaps', [])
+        detail = "；".join(self.gaps[:5]) if self.gaps else "模型未提供具体覆盖缺口"
         super().__init__("Incomplete search batch: " + detail)
 
 def batch_format():
@@ -164,11 +165,6 @@ def parse_response(data):
     batch = decode_batch_text(text)
     if not isinstance(batch, dict) or not isinstance(batch.get('complete'), bool):
         raise OutputFormatError('Batch must contain boolean complete')
-    if batch['complete'] is not True:
-        gaps = batch.get('gaps', [])
-        if not isinstance(gaps, list) or not all(isinstance(x, str) for x in gaps):
-            raise OutputFormatError('gaps must be a string array')
-        raise IncompleteBatchError(gaps)
     if not isinstance(batch.get('records'), list):
         raise OutputFormatError('records must be an array')
     if not isinstance(batch.get('gaps', []), list) or not all(isinstance(x, str) for x in batch.get('gaps', [])):
@@ -180,6 +176,8 @@ def parse_response(data):
             validate([candidate.get('record')])
         except (ValueError, TypeError) as error:
             raise OutputFormatError('Invalid record fields: ' + str(error)) from None
+    if batch['complete'] is not True:
+        raise IncompleteBatchError(batch)
     return batch
 
 def request_batch(payload, key):
@@ -192,6 +190,9 @@ def request_batch(payload, key):
             kind = 'coverage' if isinstance(error, IncompleteBatchError) else 'format'
             print(f'Batch {kind} error: response_id={data.get("id", "unknown")}; attempt={attempt + 1}/2; {error}', flush=True)
             if attempt == 1:
+                if isinstance(error, IncompleteBatchError):
+                    print('Continuing with validated partial results; coverage gaps will be reported.', flush=True)
+                    return data, error.batch
                 raise
             print('Retrying this search batch once; no database changes have been made.', flush=True)
     raise AssertionError('Unreachable')
@@ -254,7 +255,7 @@ summary必须直接由原文支持，不能把研究结果推断成医保政策�
                          'text': {'format': batch_format()}, 'max_output_tokens': 16000, 'input': prompt}, key)
         if not isinstance(batch.get('gaps', []), list) or not all(isinstance(x, str) for x in batch.get('gaps', [])):
             raise ValueError('Malformed coverage gaps')
-        audit.append({'batch': index + 1, 'response_id': data.get('id'), 'gaps': batch.get('gaps', []),
+        audit.append({'batch': index + 1, 'response_id': data.get('id'), 'complete': batch['complete'], 'gaps': batch.get('gaps', []),
                       'sources': search_sources(data)})
         for candidate in batch['records']:
             if not isinstance(candidate, dict) or not isinstance(candidate.get('evidence_quote'), str):
@@ -288,7 +289,7 @@ summary必须直接由原文支持，不能把研究结果推断成医保政策�
     return {'complete': True, 'collected_at': now.isoformat(), 'records': list(unique.values()),
             'coverage': {'window_start': str(start), 'window_end': now.date().isoformat(),
                          'mode': 'API web search + fixed official-site scan',
-                         'limitations': '搜索索引和网站访问可能遗漏；自动引文核验不等于人工事实审核。首次基线仅覆盖指定回溯期。',
+                         'limitations': '本次存在未完成批次，详见检索缺口；已核验结果仍予保存。搜索索引和网站访问可能遗漏；自动引文核验不等于人工事实审核。首次基线仅覆盖指定回溯期。' if any(not x['complete'] for x in audit) else '搜索索引和网站访问可能遗漏；自动引文核验不等于人工事实审核。首次基线仅覆盖指定回溯期。',
                          'fixed_sites': [{k: v for k, v in s.items() if k != 'text'} for s in scans],
                          'search_batches': audit}}
 

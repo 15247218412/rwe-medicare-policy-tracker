@@ -170,7 +170,25 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(before, self.snapshot())
     def test_incomplete_batch_does_not_retry_as_empty_success(self):
         with patch.object(search, 'response', return_value=self.search_output('{"complete":false,"records":[],"gaps":[]}')) as api:
-            with self.assertRaises(search.IncompleteBatchError):
+            _, batch = search.request_batch({}, 'test-only')
+        self.assertEqual(api.call_count, 2)
+        self.assertFalse(batch['complete'])
+
+    def test_partial_batch_records_are_validated_before_acceptance(self):
+        record = row()
+        payload = json.dumps({'complete': False, 'records': [
+            {'record': record, 'evidence_quote': '测试项目启动'}
+        ], 'gaps': ['某官网超时']}, ensure_ascii=False)
+        with patch.object(search, 'response', return_value=self.search_output(payload)):
+            _, batch = search.request_batch({}, 'test-only')
+        self.assertFalse(batch['complete'])
+        self.assertEqual(len(batch['records']), 1)
+        self.assertEqual(batch['gaps'], ['某官网超时'])
+
+    def test_partial_batch_invalid_record_still_fails(self):
+        payload = '{"complete":false,"records":[{"record":{},"evidence_quote":"测试"}],"gaps":["超时"]}'
+        with patch.object(search, 'response', return_value=self.search_output(payload)) as api:
+            with self.assertRaises(search.OutputFormatError):
                 search.request_batch({}, 'test-only')
         self.assertEqual(api.call_count, 2)
 
