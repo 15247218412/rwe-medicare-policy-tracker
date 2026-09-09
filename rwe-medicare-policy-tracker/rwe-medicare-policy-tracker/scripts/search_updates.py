@@ -249,16 +249,19 @@ def request_batch(payload, key):
             print('Retrying this search batch once; no database changes have been made.', flush=True)
     raise AssertionError('Unreachable')
 
+def monitoring_start(state, now):
+    last = state.get('last_successful_run')
+    if last:
+        # Include the previous run date so changes published later that day are not missed.
+        return datetime.fromisoformat(last).date()
+    return (now - timedelta(days=int(os.environ.get('BASELINE_DAYS', '365')))).date()
+
 def collect(root, state):
     key = os.environ.get('DEEPSEEK_API_KEY', '')
     if not key:
         raise RuntimeError('Configure GitHub Actions secret DEEPSEEK_API_KEY before live collection')
     now = datetime.now(CN)
-    last = state.get('last_successful_run')
-    if last:
-        start = datetime.fromisoformat(last).date() - timedelta(days=7)
-    else:
-        start = (now - timedelta(days=int(os.environ.get('BASELINE_DAYS', '365')))).date()
+    start = monitoring_start(state, now)
     with (root / 'sources/official_sites.csv').open(encoding='utf-8-sig', newline='') as f:
         sites = list(csv.DictReader(f))
     if len([s for s in sites if s['level'] == '省级']) < 31:

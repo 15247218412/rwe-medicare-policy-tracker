@@ -138,6 +138,14 @@ class PipelineTests(unittest.TestCase):
     def test_search_requires_actual_tool_call(self):
         with self.assertRaises(ValueError):
             search.parse_response({'output': []})
+    def test_next_window_starts_on_previous_success_date(self):
+        state = {'last_successful_run': '2026-09-01T18:30:00+08:00'}
+        self.assertEqual(str(search.monitoring_start(state, self.now)), '2026-09-01')
+
+    def test_first_window_uses_baseline_days(self):
+        with patch.dict('os.environ', {'BASELINE_DAYS': '30'}):
+            self.assertEqual(str(search.monitoring_start({}, self.now)), '2026-08-09')
+
     def test_missing_key_no_network(self):
         with patch.dict('os.environ', {'DEEPSEEK_API_KEY': ''}):
             with self.assertRaises(RuntimeError):
