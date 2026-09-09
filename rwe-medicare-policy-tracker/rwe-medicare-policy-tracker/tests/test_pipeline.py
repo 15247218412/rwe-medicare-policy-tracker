@@ -103,7 +103,7 @@ class PipelineTests(unittest.TestCase):
             return {'url': url, 'ok': True, 'text': 'mock page'}
         with patch.dict('os.environ', {'DEEPSEEK_API_KEY': 'test-only'}), patch.object(search, 'fetch', side_effect=fake_fetch), patch.object(search, 'response', return_value=data) as api:
             batch = search.collect(self.root, {})
-        self.assertEqual(api.call_count, 5)
+        self.assertEqual(api.call_count, 9)
         payload = api.call_args.args[0]
         self.assertEqual(payload['model'], 'deepseek-v4-flash')
         self.assertEqual(payload['tool_choice'], {'type': 'web_search'})
@@ -124,7 +124,7 @@ class PipelineTests(unittest.TestCase):
             batch = search.collect(self.root, {})
         self.assertEqual(len(batch['records']), 1)
         self.assertEqual(batch['records'][0]['status'], '待核实')
-        self.assertTrue(all(b['gaps'] for b in batch['coverage']['search_batches'][:4]))
+        self.assertTrue(all(b['gaps'] for b in batch['coverage']['search_batches'][:8]))
     def search_output(self, text):
         return {'id': 'test-response', 'status': 'completed', 'output': [
             {'type': 'web_search_call', 'status': 'completed'},
@@ -153,9 +153,17 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(before, self.snapshot())
     def test_incomplete_batch_does_not_retry_as_empty_success(self):
         with patch.object(search, 'response', return_value=self.search_output('{"complete":false,"records":[],"gaps":[]}')) as api:
-            with self.assertRaises(ValueError):
+            with self.assertRaises(search.IncompleteBatchError):
                 search.request_batch({}, 'test-only')
-        self.assertEqual(api.call_count, 1)
+        self.assertEqual(api.call_count, 2)
+
+    def test_incomplete_batch_logs_gap_and_can_recover(self):
+        incomplete = self.search_output('{"complete":false,"records":[],"gaps":["某官网超时"]}')
+        complete = self.search_output('{"complete":true,"records":[],"gaps":[]}')
+        with patch.object(search, 'response', side_effect=[incomplete, complete]) as api:
+            _, batch = search.request_batch({}, 'test-only')
+        self.assertEqual(api.call_count, 2)
+        self.assertTrue(batch['complete'])
     def test_duplicate_json_keys_rejected(self):
         with self.assertRaises(search.OutputFormatError):
             search.parse_response(self.search_output('{"complete":false,"complete":true,"records":[]}'))

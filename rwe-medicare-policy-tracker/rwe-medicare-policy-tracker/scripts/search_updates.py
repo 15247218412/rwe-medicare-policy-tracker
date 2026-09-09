@@ -79,6 +79,14 @@ def search_sources(data):
 class OutputFormatError(ValueError):
     """Model output could not be validated; eligible for one fresh search retry."""
 
+class IncompleteBatchError(ValueError):
+    """Search ran but reported incomplete coverage; eligible for one retry."""
+
+    def __init__(self, gaps):
+        self.gaps = gaps
+        detail = "；".join(gaps[:5]) if gaps else "模型未提供具体覆盖缺口"
+        super().__init__("Incomplete search batch: " + detail)
+
 def batch_format():
     properties = {name: {'type': 'string'} for name in FIELDS}
     properties['status']['enum'] = ['', '新增', '更新', '持续推进', '已完成', '待核实', '无变化']
@@ -137,7 +145,10 @@ def parse_response(data):
     if not isinstance(batch, dict) or not isinstance(batch.get('complete'), bool):
         raise OutputFormatError('Batch must contain boolean complete')
     if batch['complete'] is not True:
-        raise ValueError('Incomplete search batch; database unchanged')
+        gaps = batch.get('gaps', [])
+        if not isinstance(gaps, list) or not all(isinstance(x, str) for x in gaps):
+            raise OutputFormatError('gaps must be a string array')
+        raise IncompleteBatchError(gaps)
     if not isinstance(batch.get('records'), list):
         raise OutputFormatError('records must be an array')
     if not isinstance(batch.get('gaps', []), list) or not all(isinstance(x, str) for x in batch.get('gaps', [])):
@@ -156,9 +167,10 @@ def request_batch(payload, key):
         data = response(payload, key)
         try:
             return data, parse_response(data)
-        except OutputFormatError as error:
+        except (OutputFormatError, IncompleteBatchError) as error:
             # Never log the request, Authorization header, or full model response.
-            print(f'Batch format error: response_id={data.get("id", "unknown")}; attempt={attempt + 1}/2; {error}', flush=True)
+            kind = 'coverage' if isinstance(error, IncompleteBatchError) else 'format'
+            print(f'Batch {kind} error: response_id={data.get("id", "unknown")}; attempt={attempt + 1}/2; {error}', flush=True)
             if attempt == 1:
                 raise
             print('Retrying this search batch once; no database changes have been made.', flush=True)
@@ -193,7 +205,8 @@ def collect(root, state):
         context[name] = (root / 'data' / name).read_text(encoding='utf-8-sig')
     context['reports'] = [p.read_text(encoding='utf-8') for p in sorted((root / 'reports').glob('*.md'))[-3:]]
     records, audit = [], []
-    groups = [sites[i:i+8] for i in range(0, len(sites), 8)] + [[]]
+    # Smaller batches reduce context pressure and expose per-site gaps.
+    groups = [sites[i:i+4] for i in range(0, len(sites), 4)] + [[]]
     for index, group in enumerate(groups):
         domains = list(dict.fromkeys(urlsplit(s['seed_url']).hostname for s in group))
         tool = {'type': 'web_search'}
