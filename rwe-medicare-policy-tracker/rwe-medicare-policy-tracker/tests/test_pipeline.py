@@ -76,6 +76,30 @@ class PipelineTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 p.apply_batch(self.root, self.batch([row()]), self.now)
         self.assertEqual(before, self.snapshot())
+    def test_format_pass_omits_web_search_tool(self):
+        prose = self.search_output('检索报告：未发现新增。')
+        structured = {'id': 'format-response', 'status': 'completed', 'output': [
+            {'type': 'message', 'content': [{'type': 'output_text',
+             'text': '{"complete":true,"records":[],"gaps":[]}'}]}
+        ]}
+        with patch.object(search, 'response', side_effect=[prose, structured]) as api:
+            _, batch = search.request_batch({'model': 'deepseek-v4-flash', 'max_output_tokens': 1000}, 'test-only')
+        formatter = api.call_args_list[1].args[0]
+        self.assertNotIn('tools', formatter)
+        self.assertNotIn('tool_choice', formatter)
+        self.assertEqual(batch['records'], [])
+
+    def test_format_pass_cannot_bypass_record_validation(self):
+        prose = self.search_output('检索报告。')
+        invalid = {'id': 'format-response', 'status': 'completed', 'output': [
+            {'type': 'message', 'content': [{'type': 'output_text',
+             'text': '{"complete":true,"records":[{"record":{},"evidence_quote":""}],"gaps":[]}'}]}
+        ]}
+        with patch.object(search, 'response', side_effect=[prose, invalid, prose, invalid]) as api:
+            with self.assertRaises(search.OutputFormatError):
+                search.request_batch({'model': 'deepseek-v4-flash'}, 'test-only')
+        self.assertEqual(api.call_count, 4)
+
     def test_missing_fields_and_extra_csv_column(self):
         with self.assertRaises(ValueError):
             p.validate([{'title': 'x'}])
@@ -154,7 +178,7 @@ class PipelineTests(unittest.TestCase):
         with self.assertRaises(search.OutputFormatError):
             search.parse_response(self.search_output('检索已完成，但没有JSON。'))
 
-    def test_malformed_json_retries_once(self):
+    def test_malformed_search_text_uses_format_pass(self):
         bad = self.search_output('{"complete":true, broken}')
         good = self.search_output('{"complete":true,"records":[],"gaps":[]}')
         with patch.object(search, 'response', side_effect=[bad, good]) as api:
@@ -166,7 +190,7 @@ class PipelineTests(unittest.TestCase):
         with patch.object(search, 'response', return_value=self.search_output('{"complete":true,}')) as api:
             with self.assertRaises(search.OutputFormatError):
                 search.request_batch({}, 'test-only')
-        self.assertEqual(api.call_count, 2)
+        self.assertEqual(api.call_count, 4)
         self.assertEqual(before, self.snapshot())
     def test_incomplete_batch_does_not_retry_as_empty_success(self):
         with patch.object(search, 'response', return_value=self.search_output('{"complete":false,"records":[],"gaps":[]}')) as api:
@@ -190,7 +214,7 @@ class PipelineTests(unittest.TestCase):
         with patch.object(search, 'response', return_value=self.search_output(payload)) as api:
             with self.assertRaises(search.OutputFormatError):
                 search.request_batch({}, 'test-only')
-        self.assertEqual(api.call_count, 2)
+        self.assertEqual(api.call_count, 4)
 
     def test_incomplete_batch_logs_gap_and_can_recover(self):
         incomplete = self.search_output('{"complete":false,"records":[],"gaps":["某官网超时"]}')

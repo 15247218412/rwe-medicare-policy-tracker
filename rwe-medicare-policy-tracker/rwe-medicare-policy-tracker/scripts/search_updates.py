@@ -148,20 +148,22 @@ def decode_batch_text(text):
             f'chars={len(text)}; embedded_candidates={len(unique)}'
         ) from None
 
-def parse_response(data):
-    if data.get('status', 'completed') != 'completed':
-        raise ValueError('API response incomplete; database unchanged')
-    calls = [x for x in data.get('output', []) if x.get('type') == 'web_search_call']
-    if not any(x.get('status') == 'completed' for x in calls):
-        raise ValueError('No completed web search; refuse fabricated success')
+def response_text(data):
     messages = [x for x in data.get('output', []) if x.get('type') == 'message']
     if not messages:
         raise OutputFormatError('No final message')
-    # Intermediate assistant messages may be plain-text search progress.
     contents = messages[-1].get('content', [])
     if any(c.get('type') == 'refusal' for c in contents):
         raise ValueError('Model refusal; database unchanged')
-    text = ''.join(c['text'] for c in contents if c.get('type') == 'output_text').strip()
+    return ''.join(c['text'] for c in contents if c.get('type') == 'output_text').strip()
+
+def parse_response(data, require_search=True):
+    if data.get('status', 'completed') != 'completed':
+        raise ValueError('API response incomplete; database unchanged')
+    calls = [x for x in data.get('output', []) if x.get('type') == 'web_search_call']
+    if require_search and not any(x.get('status') == 'completed' for x in calls):
+        raise ValueError('No completed web search; refuse fabricated success')
+    text = response_text(data)
     batch = decode_batch_text(text)
     if not isinstance(batch, dict) or not isinstance(batch.get('complete'), bool):
         raise OutputFormatError('Batch must contain boolean complete')
@@ -180,20 +182,48 @@ def parse_response(data):
         raise IncompleteBatchError(batch)
     return batch
 
+def format_search_text(payload, data, key):
+    text = response_text(data)
+    if not text:
+        raise OutputFormatError('Search returned no text to format')
+    formatter = {
+        'model': payload.get('model') or os.environ.get('DEEPSEEK_MODEL') or 'deepseek-v4-flash',
+        'reasoning': {'effort': 'low'},
+        'text': {'format': batch_format()},
+        'max_output_tokens': payload.get('max_output_tokens', 16000),
+        'input': """Convert the supplied search report into the required JSON schema.
+Do not add facts, URLs, dates, quotations, or certainty. Preserve explicit coverage gaps.
+If the report says coverage is incomplete, complete must be false.
+If a field is not supported by the report, use an empty string.
+Return only JSON.
+
+SEARCH REPORT:
+""" + text
+    }
+    formatted = response(formatter, key)
+    return parse_response(formatted, require_search=False)
+
 def request_batch(payload, key):
     for attempt in range(2):
         data = response(payload, key)
         try:
             return data, parse_response(data)
-        except (OutputFormatError, IncompleteBatchError) as error:
-            # Never log the request, Authorization header, or full model response.
-            kind = 'coverage' if isinstance(error, IncompleteBatchError) else 'format'
-            print(f'Batch {kind} error: response_id={data.get("id", "unknown")}; attempt={attempt + 1}/2; {error}', flush=True)
+        except OutputFormatError as error:
+            print(f'Batch format error: response_id={data.get("id", "unknown")}; attempt={attempt + 1}/2; {error}', flush=True)
+            try:
+                batch = format_search_text(payload, data, key)
+                print('Search prose converted to validated structured output.', flush=True)
+                return data, batch
+            except OutputFormatError as format_error:
+                print(f'Format pass failed; attempt={attempt + 1}/2; {format_error}', flush=True)
+                if attempt == 1:
+                    raise
+                print('Retrying the search batch once; no database changes have been made.', flush=True)
+        except IncompleteBatchError as error:
+            print(f'Batch coverage error: response_id={data.get("id", "unknown")}; attempt={attempt + 1}/2; {error}', flush=True)
             if attempt == 1:
-                if isinstance(error, IncompleteBatchError):
-                    print('Continuing with validated partial results; coverage gaps will be reported.', flush=True)
-                    return data, error.batch
-                raise
+                print('Continuing with validated partial results; coverage gaps will be reported.', flush=True)
+                return data, error.batch
             print('Retrying this search batch once; no database changes have been made.', flush=True)
     raise AssertionError('Unreachable')
 
