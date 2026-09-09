@@ -256,6 +256,24 @@ def monitoring_start(state, now):
         return datetime.fromisoformat(last).date()
     return (now - timedelta(days=int(os.environ.get('BASELINE_DAYS', '365')))).date()
 
+def reconcile_records(records):
+    grouped = {}
+    for record in records:
+        grouped.setdefault(record['source_url'], []).append(record)
+    reconciled = []
+    for same_source in grouped.values():
+        result = same_source[0].copy()
+        stages = {item['stage'] for item in same_source if item['stage']}
+        if len(stages) == 1:
+            result['stage'] = next(iter(stages))
+        elif len(stages) > 1:
+            result.update(stage='', status='待核实', confidence='low')
+            message = '同一来源的阶段分类存在冲突；需人工核实'
+            notes = result.get('notes', '')
+            result['notes'] = notes + ('；' if notes else '') + message
+        reconciled.append(result)
+    return reconciled
+
 def collect(root, state):
     key = os.environ.get('DEEPSEEK_API_KEY', '')
     if not key:
@@ -333,16 +351,10 @@ summary必须直接由原文支持，不能把研究结果推断成医保政策�
                 r['confidence'] = 'medium'
             records.append(r)
         print('Search batch', index + 1, '/', len(groups), 'complete', flush=True)
-    # Multiple search groups may return the same article; fail on conflicting facts.
-    unique = {}
-    for r in records:
-        if r['source_url'] in unique:
-            prev = unique[r['source_url']]
-            if prev['stage'] and r['stage'] and prev['stage'] != r['stage']:
-                raise ValueError('Conflicting stages in collection; manual reconciliation required')
-            continue
-        unique[r['source_url']] = r
-    return {'complete': True, 'collected_at': now.isoformat(), 'records': list(unique.values()),
+    # The same official article can appear in multiple search groups. Classification
+    # disagreements are review metadata and must not abort the whole monitoring run.
+    records = reconcile_records(records)
+    return {'complete': True, 'collected_at': now.isoformat(), 'records': records,
             'coverage': {'window_start': str(start), 'window_end': now.date().isoformat(),
                          'mode': 'API web search + fixed official-site scan',
                          'limitations': '本次存在未完成批次，详见检索缺口；已核验结果仍予保存。搜索索引和网站访问可能遗漏；自动引文核验不等于人工事实审核。首次基线仅覆盖指定回溯期。' if any(not x['complete'] for x in audit) else '搜索索引和网站访问可能遗漏；自动引文核验不等于人工事实审核。首次基线仅覆盖指定回溯期。',

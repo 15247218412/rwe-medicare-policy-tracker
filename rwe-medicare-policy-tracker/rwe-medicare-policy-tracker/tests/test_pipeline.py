@@ -55,6 +55,27 @@ class PipelineTests(unittest.TestCase):
         p.apply_batch(self.root, self.batch([row()], collected_at='new-run'), self.now)
         self.assertEqual(p.read_csv(self.root / 'data/latest.csv'), [])
         self.assertEqual(len(p.read_csv(self.root / 'data/master.csv')), 1)
+    def test_conflicting_stage_for_same_source_is_kept_for_review(self):
+        first = row()
+        first['stage'] = '启动'
+        second = row()
+        second['stage'] = '实施'
+        result = search.reconcile_records([first, second])
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['stage'], '')
+        self.assertEqual(result[0]['status'], '待核实')
+        self.assertEqual(result[0]['confidence'], 'low')
+        self.assertIn('阶段分类存在冲突', result[0]['notes'])
+
+    def test_duplicate_source_with_one_known_stage_keeps_stage(self):
+        first = row()
+        first['stage'] = ''
+        second = row()
+        second['stage'] = '实施'
+        result = search.reconcile_records([first, second])
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['stage'], '实施')
+
     def test_duplicate_batch_rows(self):
         master, latest = p.merge([], [row(), row()], '2026-09-08')
         self.assertEqual((len(master), len(latest)), (1, 1))
