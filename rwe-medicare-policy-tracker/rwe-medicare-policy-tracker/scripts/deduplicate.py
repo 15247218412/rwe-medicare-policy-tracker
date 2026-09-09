@@ -30,5 +30,6 @@ for key, idxs in similar.items():
         print("WARN possible duplicate:", key, "rows", idxs)
 
 with path.open("w", encoding="utf-8-sig", newline="") as f:
-    w = csv.DictWriter(f, fieldnames=fieldnames); w.writeheader(); w.writerows(kept)
+    w = csv.DictWriter(f, fieldnames=fieldnames, lineterminator="\n")
+    w.writeheader(); w.writerows(kept)
 print(f"Dedup complete. Removed exact URL duplicates: {removed}")

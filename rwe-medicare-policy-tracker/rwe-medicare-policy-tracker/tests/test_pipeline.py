@@ -35,6 +35,13 @@ class PipelineTests(unittest.TestCase):
         self.assertIn('测试事件', report)
         self.assertNotIn('由 Codex 补充', report)
         self.assertTrue((self.root / 'provinces/测试省份.md').exists())
+    def test_full_pipeline_keeps_csv_line_endings_clean(self):
+        p.apply_batch(self.root, self.batch([row(notes='需要核实')]), self.now)
+        for name in ('master.csv', 'latest.csv'):
+            raw = (self.root / 'data' / name).read_bytes()
+            self.assertNotIn(b'\r\n', raw)
+            self.assertNotIn(b' \n', raw)
+
     def test_replay_keeps_report_and_files(self):
         batch = self.batch([row()])
         p.apply_batch(self.root, batch, self.now)
