@@ -117,6 +117,36 @@ def no_duplicate_keys(pairs):
         result[key] = value
     return result
 
+def decode_batch_text(text):
+    """Decode a direct JSON response or one uniquely embedded JSON object."""
+    text = text.strip()
+    fence = chr(96) * 3
+    if text.startswith(fence) and text.endswith(fence):
+        text = text[len(fence):-len(fence)].strip()
+        if text.startswith('json'):
+            text = text[4:].lstrip()
+    try:
+        return json.loads(text, object_pairs_hook=no_duplicate_keys)
+    except json.JSONDecodeError as direct_error:
+        decoder = json.JSONDecoder(object_pairs_hook=no_duplicate_keys)
+        candidates = []
+        for index, char in enumerate(text):
+            if char != '{':
+                continue
+            try:
+                value, end = decoder.raw_decode(text, index)
+            except (json.JSONDecodeError, OutputFormatError):
+                continue
+            if isinstance(value, dict) and set(value) == {'complete', 'records', 'gaps'}:
+                candidates.append((value, index, end))
+        unique = {(start, end) for _, start, end in candidates}
+        if len(unique) == 1:
+            return candidates[0][0]
+        raise OutputFormatError(
+            f'Invalid JSON at line {direct_error.lineno}, column {direct_error.colno}; '
+            f'chars={len(text)}; embedded_candidates={len(unique)}'
+        ) from None
+
 def parse_response(data):
     if data.get('status', 'completed') != 'completed':
         raise ValueError('API response incomplete; database unchanged')
@@ -131,17 +161,7 @@ def parse_response(data):
     if any(c.get('type') == 'refusal' for c in contents):
         raise ValueError('Model refusal; database unchanged')
     text = ''.join(c['text'] for c in contents if c.get('type') == 'output_text').strip()
-    fence = chr(96) * 3
-    if text.startswith(fence) and text.endswith(fence):
-        text = text[len(fence):-len(fence)].strip()
-        if text.startswith('json'):
-            text = text[4:].lstrip()
-    try:
-        batch = json.loads(text, object_pairs_hook=no_duplicate_keys)
-    except json.JSONDecodeError as error:
-        raise OutputFormatError(
-            f'Invalid JSON at line {error.lineno}, column {error.colno}; chars={len(text)}'
-        ) from None
+    batch = decode_batch_text(text)
     if not isinstance(batch, dict) or not isinstance(batch.get('complete'), bool):
         raise OutputFormatError('Batch must contain boolean complete')
     if batch['complete'] is not True:
@@ -226,7 +246,7 @@ records每项为{"record":{字段全部是字符串},"evidence_quote":"原文连
 record只使用以下22字段：""" + ','.join(FIELDS) + """
 status只用新增/更新/持续推进/已完成/待核实/无变化/空；confidence只用high/medium/low/空。
 summary必须直接由原文支持，不能把研究结果推断成医保政策。source_url为原文URL。
-记录实际覆盖缺口到gaps，访问失败不等于没有变化。不输出Markdown代码围栏。
+记录实际覆盖缺口到gaps，访问失败不等于没有变化。最终回复必须只含JSON对象，从第一个字符{开始，以最后一个字符}结束，不要解释、不要Markdown代码围栏。
 任务数据：""" + json.dumps(task, ensure_ascii=False)
         data, batch = request_batch({'model': os.environ.get('DEEPSEEK_MODEL') or 'deepseek-v4-flash',
                          'tools': [tool], 'tool_choice': {'type': 'web_search'},

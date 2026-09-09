@@ -137,6 +137,23 @@ class PipelineTests(unittest.TestCase):
     def test_fenced_json(self):
         text = chr(96)*3 + 'json\n{"complete":true,"records":[],"gaps":[]}\n' + chr(96)*3
         self.assertTrue(search.parse_response(self.search_output(text))['complete'])
+    def test_json_embedded_after_prose(self):
+        text = '检索完成，结果如下：\n{"complete":true,"records":[],"gaps":[]}\n以上为结果。'
+        self.assertTrue(search.parse_response(self.search_output(text))['complete'])
+
+    def test_only_one_complete_batch_object_is_accepted(self):
+        text = '{"note":"progress"}\n{"complete":true,"records":[],"gaps":[]}'
+        self.assertTrue(search.parse_response(self.search_output(text))['complete'])
+
+    def test_multiple_batch_objects_are_rejected(self):
+        text = '{"complete":true,"records":[],"gaps":[]}\n{"complete":true,"records":[],"gaps":[]}'
+        with self.assertRaises(search.OutputFormatError):
+            search.parse_response(self.search_output(text))
+
+    def test_prose_without_batch_is_rejected(self):
+        with self.assertRaises(search.OutputFormatError):
+            search.parse_response(self.search_output('检索已完成，但没有JSON。'))
+
     def test_malformed_json_retries_once(self):
         bad = self.search_output('{"complete":true, broken}')
         good = self.search_output('{"complete":true,"records":[],"gaps":[]}')
