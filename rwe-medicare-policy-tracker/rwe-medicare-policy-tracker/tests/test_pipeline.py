@@ -184,6 +184,16 @@ class PipelineTests(unittest.TestCase):
         with patch.dict('os.environ', {'BASELINE_DAYS': '30'}):
             self.assertEqual(str(search.monitoring_start({}, self.now)), '2026-08-09')
 
+    def test_five_day_schedule_interval(self):
+        state = {'last_successful_run': '2026-09-01T09:00:00+08:00'}
+        four_days_later = datetime(2026, 9, 5, 9, tzinfo=p.CN)
+        five_days_later = datetime(2026, 9, 6, 9, tzinfo=p.CN)
+        self.assertFalse(p.scheduled_due(state, four_days_later, 5))
+        self.assertTrue(p.scheduled_due(state, five_days_later, 5))
+
+    def test_first_scheduled_run_is_due(self):
+        self.assertTrue(p.scheduled_due({}, self.now, 5))
+
     def test_missing_key_no_network(self):
         with patch.dict('os.environ', {'DEEPSEEK_API_KEY': ''}):
             with self.assertRaises(RuntimeError):

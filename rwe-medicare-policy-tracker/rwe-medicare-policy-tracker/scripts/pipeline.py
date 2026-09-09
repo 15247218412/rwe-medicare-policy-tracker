@@ -129,19 +129,27 @@ def apply_batch(root, batch, now=None):
                         os.replace(temp_path, dest)
     return {'new': sum(r['status'] == '新增' for r in latest), 'updated': sum(r['status'] == '更新' for r in latest), 'pending': sum(r['status'] == '待核实' for r in latest)}
 
+def scheduled_due(state, now, interval_days):
+    if interval_days < 1:
+        raise ValueError('MONITOR_INTERVAL_DAYS must be at least 1')
+    if not state.get('last_successful_run'):
+        return True
+    previous = datetime.fromisoformat(state['last_successful_run'])
+    if previous.tzinfo is None:
+        previous = previous.replace(tzinfo=CN)
+    elapsed = (now.astimezone(CN).date() - previous.astimezone(CN).date()).days
+    return elapsed >= interval_days
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--input', type=Path)
     p.add_argument('--scheduled', action='store_true')
     args = p.parse_args()
     state = json.loads((ROOT / 'data/run_state.json').read_text(encoding='utf-8-sig'))
-    if args.scheduled and state.get('last_successful_run'):
-        previous = datetime.fromisoformat(state['last_successful_run'])
-        if previous.tzinfo is None:
-            previous = previous.replace(tzinfo=CN)
-        if (datetime.now(CN).date() - previous.astimezone(CN).date()).days < 2:
-            print('Not due: fewer than two calendar days since success')
-            return
+    interval_days = int(os.environ.get('MONITOR_INTERVAL_DAYS', '5'))
+    if args.scheduled and not scheduled_due(state, datetime.now(CN), interval_days):
+        print(f'Not due: fewer than {interval_days} calendar days since success')
+        return
     if args.input:
         batch = {'complete': True, 'records': read_csv(args.input), 'coverage': {'mode': 'CSV import'}} if args.input.suffix.lower() == '.csv' else json.loads(args.input.read_text(encoding='utf-8-sig'))
     else:
