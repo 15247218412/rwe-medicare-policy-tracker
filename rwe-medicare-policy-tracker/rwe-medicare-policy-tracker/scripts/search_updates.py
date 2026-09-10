@@ -79,6 +79,9 @@ def search_sources(data):
 class OutputFormatError(ValueError):
     """Model output could not be validated; eligible for one fresh search retry."""
 
+class NoWebSearchError(ValueError):
+    """The model returned output without completing the required web search."""
+
 class IncompleteBatchError(ValueError):
     """Search ran but reported incomplete coverage; eligible for one retry."""
 
@@ -162,7 +165,7 @@ def parse_response(data, require_search=True):
         raise ValueError('API response incomplete; database unchanged')
     calls = [x for x in data.get('output', []) if x.get('type') == 'web_search_call']
     if require_search and not any(x.get('status') == 'completed' for x in calls):
-        raise ValueError('No completed web search; refuse fabricated success')
+        raise NoWebSearchError('No completed web search; refuse fabricated success')
     text = response_text(data)
     batch = decode_batch_text(text)
     if not isinstance(batch, dict) or not isinstance(batch.get('complete'), bool):
@@ -224,6 +227,13 @@ def request_batch(payload, key):
         data = response(payload, key)
         try:
             return data, parse_response(data)
+        except NoWebSearchError as error:
+            print(f'Web search tool not used: response_id={data.get("id", "unknown")}; attempt={attempt + 1}/2; {error}', flush=True)
+            if attempt == 1:
+                print('Skipping this unverified batch; coverage gap will be reported.', flush=True)
+                return data, {'complete': False, 'records': [],
+                              'gaps': ['DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果']}
+            print('Retrying this search batch once; no database changes have been made.', flush=True)
         except OutputFormatError as error:
             print(f'Batch format error: response_id={data.get("id", "unknown")}; attempt={attempt + 1}/2; {error}', flush=True)
             try:

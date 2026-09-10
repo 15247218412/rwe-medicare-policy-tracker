@@ -194,6 +194,19 @@ class PipelineTests(unittest.TestCase):
     def test_first_scheduled_run_is_due(self):
         self.assertTrue(p.scheduled_due({}, self.now, 5))
 
+    def test_missing_web_search_retries_then_records_coverage_gap(self):
+        data = {'id': 'no-search', 'status': 'completed', 'output': [
+            {'type': 'message', 'content': [{'type': 'output_text',
+             'text': '{"complete":true,"records":[],"gaps":[]}'}]}
+        ]}
+        with patch.object(search, 'response', return_value=data) as api:
+            returned, batch = search.request_batch({}, 'test-only')
+        self.assertEqual(api.call_count, 2)
+        self.assertEqual(returned['id'], 'no-search')
+        self.assertFalse(batch['complete'])
+        self.assertEqual(batch['records'], [])
+        self.assertIn('未执行联网搜索工具', batch['gaps'][0])
+
     def test_missing_key_no_network(self):
         with patch.dict('os.environ', {'DEEPSEEK_API_KEY': ''}):
             with self.assertRaises(RuntimeError):
