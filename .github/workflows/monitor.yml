@@ -6,14 +6,15 @@ on:
       - '.github/workflows/monitor.yml'
       - 'rwe-medicare-policy-tracker/rwe-medicare-policy-tracker/scripts/**'
       - 'rwe-medicare-policy-tracker/rwe-medicare-policy-tracker/tests/**'
+      - 'rwe-medicare-policy-tracker/rwe-medicare-policy-tracker/sources/**'
   schedule:
     - cron: '17 1 * * *'
   workflow_dispatch:
     inputs:
       mode:
-        description: 'live = paid API collection; test = offline verification only'
+        description: 'test = offline; live = normal collection; pilot_baseline = one-time pilot history'
         type: choice
-        options: [test, live]
+        options: [test, live, pilot_baseline]
         default: test
 permissions:
   contents: write
@@ -43,19 +44,22 @@ jobs:
       - name: Offline regression tests
         run: python -m unittest discover -s tests -v
       - name: Collect and generate
-        if: github.event_name == 'schedule' || inputs.mode == 'live'
+        if: github.event_name == 'schedule' || inputs.mode == 'live' || inputs.mode == 'pilot_baseline'
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           DEEPSEEK_MODEL: ${{ vars.DEEPSEEK_MODEL }}
           EVENT_NAME: ${{ github.event_name }}
+          RUN_MODE: ${{ inputs.mode }}
         run: |
           if [ "$EVENT_NAME" = "schedule" ]; then
             python scripts/pipeline.py --scheduled
+          elif [ "$RUN_MODE" = "pilot_baseline" ]; then
+            MONITOR_WINDOW_START=2025-09-23 COLLECTION_SCOPE=pilot python scripts/pipeline.py
           else
             python scripts/pipeline.py
           fi
       - name: Commit and push generated files
-        if: github.event_name == 'schedule' || inputs.mode == 'live'
+        if: github.event_name == 'schedule' || inputs.mode == 'live' || inputs.mode == 'pilot_baseline'
         run: |
           git diff --check
           git add -- data provinces reports

@@ -260,11 +260,26 @@ def request_batch(payload, key):
     raise AssertionError('Unreachable')
 
 def monitoring_start(state, now):
+    forced = os.environ.get('MONITOR_WINDOW_START', '').strip()
+    if forced:
+        start = datetime.strptime(forced, '%Y-%m-%d').date()
+        if start > now.astimezone(CN).date():
+            raise ValueError('MONITOR_WINDOW_START cannot be in the future')
+        return start
     last = state.get('last_successful_run')
     if last:
         # Include the previous run date so changes published later that day are not missed.
         return datetime.fromisoformat(last).date()
     return (now - timedelta(days=int(os.environ.get('BASELINE_DAYS', '365')))).date()
+
+def select_collection_sites(sites, scope):
+    if scope != 'pilot':
+        return sites
+    selected = [site for site in sites if site.get('level') == '试点先行地区'
+                or (site.get('level') == '省级' and site.get('province') in {'海南', '重庆'})]
+    if len(selected) != 14:
+        raise ValueError(f'Pilot baseline requires 14 confirmed areas; found {len(selected)}')
+    return selected
 
 def reconcile_records(records):
     grouped = {}
@@ -294,12 +309,17 @@ def collect(root, state):
         sites = list(csv.DictReader(f))
     if len([s for s in sites if s['level'] == '省级']) < 31:
         raise ValueError('Official source inventory must cover 31 provinces')
+    scope = os.environ.get('COLLECTION_SCOPE', 'all').strip() or 'all'
+    if scope not in {'all', 'pilot'}:
+        raise ValueError('COLLECTION_SCOPE must be all or pilot')
+    sites = select_collection_sites(sites, scope)
     history = read_csv(root / 'data/master.csv')
     known = {s['seed_url'] for s in sites}
-    for r in history:
-        if r['source_url'] not in known:
-            sites.append({'seed_url': r['source_url'], 'organization': r['organization'], 'province': r['province']})
-            known.add(r['source_url'])
+    if scope == 'all':
+        for r in history:
+            if r['source_url'] not in known:
+                sites.append({'seed_url': r['source_url'], 'organization': r['organization'], 'province': r['province']})
+                known.add(r['source_url'])
     # Fixed official-site access precedes search supplementation; failures are explicit.
     with ThreadPoolExecutor(max_workers=8) as pool:
         scans = list(pool.map(fetch, [s['seed_url'] for s in sites]))

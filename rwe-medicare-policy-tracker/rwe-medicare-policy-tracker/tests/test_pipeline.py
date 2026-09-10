@@ -176,6 +176,20 @@ class PipelineTests(unittest.TestCase):
     def test_search_requires_actual_tool_call(self):
         with self.assertRaises(ValueError):
             search.parse_response({'output': []})
+    def test_forced_pilot_baseline_start_overrides_previous_success(self):
+        state = {'last_successful_run': '2026-09-10T09:00:00+08:00'}
+        with patch.dict('os.environ', {'MONITOR_WINDOW_START': '2025-09-23'}):
+            self.assertEqual(str(search.monitoring_start(state, self.now)), '2025-09-23')
+
+    def test_pilot_scope_selects_exactly_fourteen_confirmed_areas(self):
+        with (ROOT / 'sources/official_sites.csv').open(encoding='utf-8-sig', newline='') as source:
+            sites = list(csv.DictReader(source))
+        selected = search.select_collection_sites(sites, 'pilot')
+        self.assertEqual(len(selected), 14)
+        self.assertEqual(len({site['seed_url'] for site in selected}), 14)
+        self.assertIn(('海南', ''), {(site['province'], site['city']) for site in selected})
+        self.assertIn(('重庆', ''), {(site['province'], site['city']) for site in selected})
+
     def test_next_window_starts_on_previous_success_date(self):
         state = {'last_successful_run': '2026-09-01T18:30:00+08:00'}
         self.assertEqual(str(search.monitoring_start(state, self.now)), '2026-09-01')
