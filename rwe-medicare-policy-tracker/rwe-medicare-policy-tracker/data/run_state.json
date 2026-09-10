@@ -1,9 +1,10 @@
 {
-  "last_successful_run": "2026-09-09T14:58:15.739622+08:00",
+  "last_successful_run": "2026-09-10T16:55:12.312538+08:00",
   "last_baseline_run": "2026-09-09T14:58:15.739622+08:00",
   "lookback_days": 7,
   "schema_version": "1.0",
   "processed_batches": [
-    "35fe1d77918d19ced27ab32b8c4d61ea0163d373a26b8ea006a9e67f9dacc857"
+    "35fe1d77918d19ced27ab32b8c4d61ea0163d373a26b8ea006a9e67f9dacc857",
+    "af494161ca584f24e2d27ffc488e8bccfcd47b5af2a0f09c3f097cfe1da6cf50"
   ]
 }
