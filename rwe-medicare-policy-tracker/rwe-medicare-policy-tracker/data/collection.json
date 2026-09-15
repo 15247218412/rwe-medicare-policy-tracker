@@ -1,6 +1,6 @@
 {
-  "window_start": "2026-09-09",
-  "window_end": "2026-09-10",
+  "window_start": "2026-09-10",
+  "window_end": "2026-09-15",
   "mode": "API web search + fixed official-site scan",
   "limitations": "本次存在未完成批次，详见检索缺口；已核验结果仍予保存。搜索索引和网站访问可能遗漏；自动引文核验不等于人工事实审核。首次基线仅覆盖指定回溯期。",
   "fixed_sites": [
@@ -125,8 +125,7 @@
     },
     {
       "url": "https://ylbzj.xizang.gov.cn/",
-      "ok": false,
-      "reason": "网页不可读取"
+      "ok": true
     },
     {
       "url": "https://ybj.shaanxi.gov.cn/",
@@ -279,7 +278,7 @@
   "search_batches": [
     {
       "batch": 1,
-      "response_id": "1d0cdfb6-46cd-4448-92ac-733d73e9cf99",
+      "response_id": "03b80d06-1728-40c4-83e6-667bb8cf9ed9",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -288,7 +287,7 @@
     },
     {
       "batch": 2,
-      "response_id": "498dc5a0-8c47-404a-bca5-b4e6974fa577",
+      "response_id": "e61442d5-092e-48dc-ae52-b99f972db5d8",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -297,7 +296,7 @@
     },
     {
       "batch": 3,
-      "response_id": "e4f34f13-0876-4335-98ae-f09dde64c220",
+      "response_id": "9ee42fa1-b1ce-4dae-b91d-d4e78f02edea",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -306,7 +305,7 @@
     },
     {
       "batch": 4,
-      "response_id": "3b72c83f-97da-48fd-8652-3fe28347566c",
+      "response_id": "5bd3c94a-27dc-401a-8671-f4a4267b4114",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -315,7 +314,7 @@
     },
     {
       "batch": 5,
-      "response_id": "62dcf616-df1b-41e4-b490-948fa0f0826c",
+      "response_id": "e0321c94-aad3-418a-b0b3-bea10101acf3",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -324,7 +323,7 @@
     },
     {
       "batch": 6,
-      "response_id": "7598a537-a415-48fd-ad96-fb531241dbfd",
+      "response_id": "110e3c7e-ac8d-48bf-92cc-7039bae7429e",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -333,7 +332,7 @@
     },
     {
       "batch": 7,
-      "response_id": "eb61cd34-3b4c-4c0e-80cb-aa24a3593d69",
+      "response_id": "43ef846f-fac0-4e32-9aaf-f50fc7650db3",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -342,7 +341,7 @@
     },
     {
       "batch": 8,
-      "response_id": "bfb17e35-0496-4fae-b8f7-244de32a9bb9",
+      "response_id": "cf9f04ee-bcbe-4a34-a33a-6c5c9ca6777b",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -351,7 +350,7 @@
     },
     {
       "batch": 9,
-      "response_id": "dfdd54b9-4c87-487d-aeae-6309c89a91d2",
+      "response_id": "41ba911e-5c01-478a-97f7-413c05470fa4",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -360,7 +359,7 @@
     },
     {
       "batch": 10,
-      "response_id": "d17317ea-4dde-4bd9-aa7e-dde806646309",
+      "response_id": "d1f76cad-cd7c-4c02-9e66-49297c2c61aa",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -369,7 +368,7 @@
     },
     {
       "batch": 11,
-      "response_id": "c2ad2e73-e1b3-4e70-81ce-e18c754f6557",
+      "response_id": "9bc69919-9aca-4614-9e19-bfa7d323e1da",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -378,7 +377,7 @@
     },
     {
       "batch": 12,
-      "response_id": "57b18c49-a4d8-4482-b03f-27f1a44703a3",
+      "response_id": "e33c92bc-e112-4cf3-b8d7-01ebf1cd5801",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -387,7 +386,7 @@
     },
     {
       "batch": 13,
-      "response_id": "cf7e0750-19b9-4223-9827-ccacf72c11de",
+      "response_id": "3372bab3-092f-4c44-bb2e-1025aba4d101",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -396,7 +395,7 @@
     },
     {
       "batch": 14,
-      "response_id": "94080fad-adcd-4d4a-8508-6803e5f504b4",
+      "response_id": "3eecb66f-b07b-478c-b32d-60875d686436",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -405,7 +404,7 @@
     },
     {
       "batch": 15,
-      "response_id": "4e58f735-cd8e-4bb8-b7b7-2cbb726302e9",
+      "response_id": "4275581d-36ff-4dba-bf36-fc76047e4a53",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -414,7 +413,7 @@
     },
     {
       "batch": 16,
-      "response_id": "82995d8a-e934-4286-a3a0-f6e2e46f865f",
+      "response_id": "8c0026b0-0160-4ea9-9b8b-a6286cb68653",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
