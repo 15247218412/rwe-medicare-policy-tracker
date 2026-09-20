@@ -1,6 +1,6 @@
 {
-  "window_start": "2026-09-10",
-  "window_end": "2026-09-15",
+  "window_start": "2026-09-15",
+  "window_end": "2026-09-20",
   "mode": "API web search + fixed official-site scan",
   "limitations": "本次存在未完成批次，详见检索缺口；已核验结果仍予保存。搜索索引和网站访问可能遗漏；自动引文核验不等于人工事实审核。首次基线仅覆盖指定回溯期。",
   "fixed_sites": [
@@ -278,7 +278,7 @@
   "search_batches": [
     {
       "batch": 1,
-      "response_id": "03b80d06-1728-40c4-83e6-667bb8cf9ed9",
+      "response_id": "5e077248-0d2d-45cd-82f1-ef2c41bdc570",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -287,7 +287,7 @@
     },
     {
       "batch": 2,
-      "response_id": "e61442d5-092e-48dc-ae52-b99f972db5d8",
+      "response_id": "49c9b806-7669-47d8-9088-5900b97b0d71",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -296,7 +296,7 @@
     },
     {
       "batch": 3,
-      "response_id": "9ee42fa1-b1ce-4dae-b91d-d4e78f02edea",
+      "response_id": "2f8a3196-291d-4060-97d6-779c01b04380",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -305,7 +305,7 @@
     },
     {
       "batch": 4,
-      "response_id": "5bd3c94a-27dc-401a-8671-f4a4267b4114",
+      "response_id": "f2733a99-1fe9-4296-b28b-7a600673c776",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -314,7 +314,7 @@
     },
     {
       "batch": 5,
-      "response_id": "e0321c94-aad3-418a-b0b3-bea10101acf3",
+      "response_id": "71c28248-1535-4341-92d1-e520e0ba0be8",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -323,7 +323,7 @@
     },
     {
       "batch": 6,
-      "response_id": "110e3c7e-ac8d-48bf-92cc-7039bae7429e",
+      "response_id": "b44e3b0e-adb3-4c01-bd55-662521710ca6",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -332,7 +332,7 @@
     },
     {
       "batch": 7,
-      "response_id": "43ef846f-fac0-4e32-9aaf-f50fc7650db3",
+      "response_id": "67794946-008e-4796-8ec5-2c6e445c421e",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -341,7 +341,7 @@
     },
     {
       "batch": 8,
-      "response_id": "cf9f04ee-bcbe-4a34-a33a-6c5c9ca6777b",
+      "response_id": "3c7b24b7-47db-4f07-a939-0c282ed6ef04",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -350,7 +350,7 @@
     },
     {
       "batch": 9,
-      "response_id": "41ba911e-5c01-478a-97f7-413c05470fa4",
+      "response_id": "1920f4eb-ba60-436f-92ba-572404dbde5d",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -359,7 +359,7 @@
     },
     {
       "batch": 10,
-      "response_id": "d1f76cad-cd7c-4c02-9e66-49297c2c61aa",
+      "response_id": "dea0a79e-de8a-4ec4-81a6-7ef34169991a",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -368,7 +368,7 @@
     },
     {
       "batch": 11,
-      "response_id": "9bc69919-9aca-4614-9e19-bfa7d323e1da",
+      "response_id": "00f8e4db-251a-4d2d-a924-aad60d4599ed",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -377,7 +377,7 @@
     },
     {
       "batch": 12,
-      "response_id": "e33c92bc-e112-4cf3-b8d7-01ebf1cd5801",
+      "response_id": "435d1e24-0f13-41a7-8de0-8e7bd95d403f",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -386,7 +386,7 @@
     },
     {
       "batch": 13,
-      "response_id": "3372bab3-092f-4c44-bb2e-1025aba4d101",
+      "response_id": "2e150d79-8981-439d-aaaa-0b933d4c06ea",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -395,7 +395,7 @@
     },
     {
       "batch": 14,
-      "response_id": "3eecb66f-b07b-478c-b32d-60875d686436",
+      "response_id": "0d9628cc-17bd-4643-a450-2f4010ae3ff2",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -404,7 +404,7 @@
     },
     {
       "batch": 15,
-      "response_id": "4275581d-36ff-4dba-bf36-fc76047e4a53",
+      "response_id": "73a32179-6381-40a3-b42b-b5ff2379f574",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
@@ -413,7 +413,7 @@
     },
     {
       "batch": 16,
-      "response_id": "8c0026b0-0160-4ea9-9b8b-a6286cb68653",
+      "response_id": "afa117c9-fcd7-4460-81f0-f2eb28f312a3",
       "complete": false,
       "gaps": [
         "DeepSeek连续两次未执行联网搜索工具；本批次未保存任何未经联网核验的结果"
